@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Orçamentos</title>
+<style>
+:root{--bg:#f6f7f9;--c:#fff;--t:#1b1f24;--m:#6b7280;--p:#0f766e;--b:#e5e7eb;--er:#b91c1c;--wa:#16a34a}
+@media(prefers-color-scheme:dark){:root{--bg:#111418;--c:#1a1f26;--t:#e8eaed;--m:#9aa3af;--b:#2a313a;--p:#2dd4bf}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:16px}h1{font-size:20px;margin:0 0 12px}h2{font-size:16px;margin:0 0 10px}
+.card{background:var(--c);border:1px solid var(--b);border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--m);margin:8px 0 3px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--b);border-radius:8px;background:var(--bg);color:var(--t);font:inherit}
+button{padding:10px 14px;border:0;border-radius:8px;background:var(--p);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button.s{background:transparent;color:var(--t);border:1px solid var(--b)}button.wa{background:var(--wa)}button.d{background:transparent;color:var(--er);border:1px solid var(--b)}button.sm{padding:6px 10px;font-size:13px}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}.tabs button{background:var(--c);color:var(--t);border:1px solid var(--b);white-space:nowrap}.tabs button.on{background:var(--p);color:#fff}
+.r{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.r>*{flex:1}.r>button{flex:0 0 auto}
+.tb{overflow-x:auto}table{width:100%;border-collapse:collapse}td{padding:6px;border-bottom:1px solid var(--b);font-size:14px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;font-weight:600;background:var(--b);flex:0 0 auto}
+.Aprovado,.Pago{background:#dcfce7;color:#166534}.Recusado{background:#fee2e2;color:#991b1b}.Enviado{background:#dbeafe;color:#1e40af}
+.m{color:var(--m);font-size:13px}.tot{font-size:18px;font-weight:700}.err{color:var(--er);font-size:13px;margin-top:6px}
+</style></head><body><div class="w" id="app">Carregando...</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ====== CONFIGURE AQUI (Supabase > Project Settings > API) ====== */
+const SUPABASE_URL='https://fglxatxchwdgqpoygrig.supabase.co/rest/v1/', SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbHhhdHhjaHdkZ3Fwb3lncmlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NDIwMzQsImV4cCI6MjEwNzQxODAzNH0.yHMaoXX1wRoxNsyJtpv5gcTkeZdCQGHfX0qLGutmM1Y';
+/* ================================================================ */
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const $=id=>document.getElementById(id),v=id=>($(id)||{}).value||'';
+const R=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const dt=d=>d?d.split('-').reverse().join('/'):'';
+const tot=b=>b.itens.reduce((a,i)=>a+i.q*i.v,0);
+const paid=b=>S.pags.filter(p=>p.orcamento_id==b.id).reduce((a,p)=>a+ +p.valor,0);
+const wa=(tel,txt)=>{let d=String(tel||'').replace(/\D/g,'');if(d.length<=11)d='55'+d;window.open('https://wa.me/'+d+'?text='+encodeURIComponent(txt),'_blank')};
+let S={emp:null,cli:[],orc:[],pags:[]},V={tab:'orc',form:null,err:'',mode:'login'};
+
+async function init(){
+  const tk=new URLSearchParams(location.search).get('o');
+  if(tk)return clientView(tk);
+  const{data:{session}}=await sb.auth.getSession();
+  sb.auth.onAuthStateChange((_e,s)=>{if(!s)authView();});
+  session?load():authView();
+}
+async function load(){
+  const[e,c,o,p]=await Promise.all([
+    sb.from('empresas').select('*').maybeSingle(),
+    sb.from('clientes').select('*').order('nome'),
+    sb.from('orcamentos').select('*').order('numero',{ascending:false}),
+    sb.from('pagamentos').select('*').order('created_at')]);
+  S={emp:e.data,cli:c.data||[],orc:o.data||[],pags:p.data||[]};
+  S.emp?app():empresaView();
+}
+/* ---------- Login / cadastro ---------- */
+function authView(){const l=V.mode=='login';
+  $('app').innerHTML=`<h1>${l?'Entrar':'Criar conta'}</h1><div class="card"><label>Email</label><input id="em" type="email"><label>Senha (8 dígitos)</label><input id="pw" type="password" inputmode="numeric" maxlength="8"><div class="err" id="e"></div><p class="r"><button onclick="auth()">${l?'Entrar':'Criar conta'}</button><button class="s" onclick="V.mode='${l?'signup':'login'}';authView()">${l?'Primeiro acesso? Criar conta':'Já tenho conta'}</button></p></div>`}
+async function auth(){const em=v('em').trim(),pw=v('pw'),l=V.mode=='login';
+  if(!/^\d{8}$/.test(pw))return $('e').textContent='A senha deve ter exatamente 8 dígitos numéricos.';
+  const{error,data}=l?await sb.auth.signInWithPassword({email:em,password:pw}):await sb.auth.signUp({email:em,password:pw});
+  if(error)return $('e').textContent=error.message;
+  if(!l&&!data.session){$('e').textContent='Conta criada! Confirme o email que enviamos e depois entre.';V.mode='login';return}
+  load()}
+/* ---------- Cadastro da empresa (primeiro acesso) ---------- */
+function empresaView(){$('app').innerHTML=`<h1>Cadastre sua empresa</h1><div class="card"><label>Nome</label><input id="n"><label>CNPJ ou CPF</label><input id="doc"><label>Endereço</label><input id="end"><label>Telefone (WhatsApp)</label><input id="tel" inputmode="tel"><label>Email</label><input id="em2" type="email"><label>Redes sociais</label><input id="rs"><div class="err" id="e"></div><p><button onclick="saveEmp()">Salvar</button></p></div>`;
+  sb.auth.getUser().then(u=>{$('em2').value=u.data.user?.email||''})}
+async function saveEmp(){const x={nome:v('n').trim(),doc:v('doc').trim(),endereco:v('end'),telefone:v('tel').trim(),email:v('em2'),redes:v('rs')};
+  if(!x.nome||!x.doc||!x.telefone)return $('e').textContent='Preencha nome, CNPJ/CPF e telefone.';
+  const{error}=await sb.from('empresas').insert(x);if(error)return $('e').textContent=error.message;load()}
+/* ---------- App ---------- */
+function app(){const T=[['orc','Orçamentos'],['cli','Clientes'],['pag','Pagamentos'],['emp','Empresa']];
+  $('app').innerHTML=`<h1>${esc(S.emp.nome)}</h1><div class="tabs">${T.map(t=>`<button class="${V.tab==t[0]?'on':''}" onclick="V.tab='${t[0]}';V.form=null;app()">${t[1]}</button>`).join('')}</div><div id="v"></div>`;
+  ({orc:orcV,cli:cliV,pag:pagV,emp:empV})[V.tab]($('v'))}
+function empV(e){const c=S.emp;e.innerHTML=`<div class="card"><h2>Dados da empresa</h2><p>${esc(c.nome)}<br>${esc(c.doc)}<br>${esc(c.endereco)}<br>${esc(c.telefone)} · ${esc(c.email)}<br>${esc(c.redes)}</p><button class="s" onclick="sb.auth.signOut()">Sair</button></div>`}
+function cliV(e){e.innerHTML=`<div class="card"><h2>Novo cliente</h2><label>Nome</label><input id="cn"><label>CPF/CNPJ</label><input id="cd"><label>WhatsApp</label><input id="ct" inputmode="tel"><label>Email</label><input id="ce"><label>Endereço</label><input id="ca"><p><button onclick="addCli()">Salvar cliente</button></p></div>`+S.cli.map(c=>`<div class="card"><b>${esc(c.nome)}</b><div class="m">${esc(c.doc)} · ${esc(c.telefone)} · ${esc(c.email)}<br>${esc(c.endereco)}</div><p><button class="d sm" onclick="del('clientes','${c.id}')">Excluir</button></p></div>`).join('')}
+async function addCli(){if(!v('cn').trim())return;await sb.from('clientes').insert({nome:v('cn').trim(),doc:v('cd'),telefone:v('ct'),email:v('ce'),endereco:v('ca')});load()}
+async function del(t,id){if(!confirm('Excluir?'))return;await sb.from(t).delete().eq('id',id);load()}
+function orcV(e){if(V.form)return formV(e);
+  e.innerHTML=`<p><button onclick="V.form={cid:'',t:'',val:'',obs:'',items:[{d:'',q:1,v:0}]};app()">+ Novo orçamento</button></p>`+(S.orc.map(b=>{const c=S.cli.find(x=>x.id==b.cliente_id)||{nome:'?'};return`<div class="card"><div class="r"><b>#${b.numero} · ${esc(b.titulo)}</b><span class="badge ${b.status}">${b.status}</span></div><div class="m">${esc(c.nome)} · ${R(tot(b))}</div><div class="r" style="margin-top:8px"><button class="wa sm" onclick="send('${b.id}')">Enviar no WhatsApp</button><button class="d sm" onclick="del('orcamentos','${b.id}')">Excluir</button></div></div>`}).join('')||'<p class="m">Nenhum orçamento ainda.</p>')}
+function formV(e){const f=V.form;
+  e.innerHTML=`<div class="card"><h2>Novo orçamento</h2><label>Cliente</label><select onchange="V.form.cid=this.value"><option value="">Selecione</option>${S.cli.map(c=>`<option value="${c.id}" ${f.cid==c.id?'selected':''}>${esc(c.nome)}</option>`).join('')}</select><label>Título do serviço</label><input value="${esc(f.t)}" oninput="V.form.t=this.value"><label>Itens (descrição, qtd, valor)</label>${f.items.map((i,k)=>`<div class="r"><input style="flex:3" value="${esc(i.d)}" oninput="V.form.items[${k}].d=this.value"><input type="number" style="flex:1" min="0" value="${i.q}" oninput="V.form.items[${k}].q=+this.value;tt()"><input type="number" style="flex:1.5" min="0" step="0.01" value="${i.v||''}" oninput="V.form.items[${k}].v=+this.value;tt()"></div>`).join('')}<p><button class="s sm" onclick="V.form.items.push({d:'',q:1,v:0});app()">+ item</button></p><label>Validade</label><input type="date" value="${f.val}" oninput="V.form.val=this.value"><label>Observações</label><textarea rows="3" oninput="V.form.obs=this.value">${esc(f.obs)}</textarea><p class="tot" id="tt"></p><div class="err">${V.err}</div><div class="r"><button onclick="saveO()">Salvar</button><button class="s" onclick="V.form=null;app()">Cancelar</button></div></div>`;tt()}
+function tt(){const e=$('tt');if(e)e.textContent='Total: '+R(tot({itens:V.form.items}))}
+async function saveO(){const f=V.form,it=f.items.filter(i=>i.d&&i.v);
+  if(!f.cid||!f.t.trim()||!it.length){V.err='Escolha o cliente, o título e ao menos um item com valor.';return app()}
+  V.err='';const{error}=await sb.from('orcamentos').insert({cliente_id:f.cid,titulo:f.t.trim(),itens:it,validade:f.val||null,obs:f.obs});
+  if(error){V.err=error.message;return app()}V.form=null;load()}
+async function send(id){const b=S.orc.find(x=>x.id==id),c=S.cli.find(x=>x.id==b.cliente_id);if(!c)return;
+  const link=location.origin+location.pathname+'?o='+b.token;
+  if(b.status=='Rascunho')await sb.from('orcamentos').update({status:'Enviado'}).eq('id',id);
+  wa(c.telefone,`Olá, ${c.nome}! Segue o orçamento #${b.numero} (${b.titulo}) no valor de ${R(tot(b))}.\nAbra para ver os detalhes e aprovar:\n${link}`);load()}
+function pagV(e){const L=S.orc.filter(b=>b.status=='Aprovado');
+  e.innerHTML=L.map(b=>{const c=S.cli.find(x=>x.id==b.cliente_id)||{nome:'?'},p=paid(b),s=tot(b)-p;return`<div class="card"><div class="r"><b>#${b.numero} · ${esc(c.nome)}</b><span class="badge ${s<=0?'Pago':''}">${s<=0?'Pago':'Em aberto'}</span></div><div class="m">Total ${R(tot(b))} · Pago ${R(p)} · Saldo ${R(Math.max(s,0))}</div>${S.pags.filter(x=>x.orcamento_id==b.id).map(x=>`<div class="m">✓ ${dt(x.data)}: ${R(x.valor)}</div>`).join('')}${s>0?`<div class="r" style="margin-top:8px"><input id="p${b.numero}" type="number" step="0.01" value="${s.toFixed(2)}"><button class="sm" onclick="baixa('${b.id}',${b.numero})">Dar baixa</button></div>`:''}</div>`}).join('')||'<p class="m">Orçamentos aprovados aparecem aqui para controle de pagamento.</p>'}
+async function baixa(id,n){const x=+v('p'+n);if(!(x>0))return;await sb.from('pagamentos').insert({orcamento_id:id,valor:x});load()}
+/* ---------- Visão do cliente (link público) ---------- */
+async function clientView(tk){const{data:o}=await sb.rpc('orcamento_publico',{p_token:tk});
+  if(!o)return $('app').innerHTML='<p>Orçamento não encontrado.</p>';
+  const T=o.itens.reduce((s,i)=>s+i.q*i.v,0),fin=o.status=='Aprovado'||o.status=='Recusado';
+  $('app').innerHTML=`<h1>Orçamento #${o.numero} · ${esc(o.empresa)}</h1><div class="card"><p>Olá, <b>${esc(o.cliente)}</b>!<br><span class="m">${esc(o.titulo)}${o.validade?' · válido até '+dt(o.validade):''}</span></p><div class="tb"><table>${o.itens.map(i=>`<tr><td>${esc(i.d)}</td><td>${i.q}×</td><td>${R(i.v)}</td></tr>`).join('')}</table></div><p class="tot">Total: ${R(T)}</p>${o.obs?`<p class="m">${esc(o.obs)}</p>`:''}<div id="ac">${fin?`<span class="badge ${o.status}">${o.status}</span>`:`<div class="r"><button class="wa" onclick="resp('${tk}',true)">✓ Aprovar orçamento</button><button class="d" onclick="resp('${tk}',false)">Recusar</button></div>`}</div></div>`;
+  window._o=o}
+async function resp(tk,ok){const{data}=await sb.rpc('responder_orcamento',{p_token:tk,p_aprovar:ok});
+  $('ac').innerHTML=data=='indisponivel'?'<p class="m">Este orçamento não pode mais ser alterado.</p>':`<span class="badge ${data}">${data} ✓</span><p class="m">Resposta registrada. Obrigado!</p>`}
+init();
+</script></body></html>

@@ -19,7 +19,7 @@ button.s{background:transparent;color:var(--t);border:1px solid var(--b)}button.
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ====== CONFIGURE AQUI (Supabase > Project Settings > API) ====== */
-const SUPABASE_URL='https://fglxatxchwdgqpoygrig.supabase.co/rest/v1/', SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbHhhdHhjaHdkZ3Fwb3lncmlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NDIwMzQsImV4cCI6MjEwNzQxODAzNH0.yHMaoXX1wRoxNsyJtpv5gcTkeZdCQGHfX0qLGutmM1Y';
+const SUPABASE_URL='https://fglxatxchwdgqpoygrig.supabase.co', SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnbHhhdHhjaHdkZ3Fwb3lncmlnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NDIwMzQsImV4cCI6MjEwNzQxODAzNH0.yHMaoXX1wRoxNsyJtpv5gcTkeZdCQGHfX0qLGutmM1Y';
 /* ================================================================ */
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id),v=id=>($(id)||{}).value||'';

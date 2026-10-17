@@ -67,8 +67,12 @@ async function rpc(fn,body){
 }
 (async()=>{
   if(!owner){$('f').style.display='none';$('hd').innerHTML='<p>Link inválido.</p>';return}
-  try{emp=(await rpc('empresa_publica',{p_owner:owner}))||{}}catch(e){}
-  if(!emp.nome){$('f').style.display='none';$('hd').innerHTML='<p>Esta página não está disponível.</p>';return}
+  if(SB_URL.startsWith('COLE')){$('f').style.display='none';$('hd').innerHTML='<p>Falta configurar SB_URL e SB_KEY no início deste arquivo.</p>';return}
+  let falha=false;
+  try{emp=(await rpc('empresa_publica',{p_owner:owner}))||{}}catch(e){falha=true}
+  if(!emp.nome){$('f').style.display='none';
+    $('hd').innerHTML=falha?'<p>Não foi possível conectar ao servidor. Confira a URL e a chave neste arquivo e se o SQL foi executado no Supabase.</p>'
+      :'<p>Empresa não encontrada. Entre no painel (index.html), preencha o nome da empresa em "Dados da empresa" e aguarde aparecer "salvo ✓".</p>';return}
   $('hd').innerHTML=(emp.logo&&String(emp.logo).startsWith('data:image/')?'<img src="'+emp.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':'')+'<h1>'+esc(emp.nome)+'</h1><div class="mu">Faça sua solicitação abaixo. Entraremos em contato.</div>';
 })();
 

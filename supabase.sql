@@ -69,7 +69,9 @@ create policy dono on public.dados for all
   using (owner = auth.uid()) with check (owner = auth.uid());
 
 -- ===== Solicitações feitas pelos clientes (página pública solicitar.html) =====
-create table if not exists public.perfil_publico (
+-- perfil_publico é só uma cópia dos dados da empresa (o painel reenvia a cada sincronização), por isso pode ser recriada
+drop table if exists public.perfil_publico cascade;
+create table public.perfil_publico (
   owner uuid primary key references auth.users(id),
   nome text, tel text, logo text
 );

@@ -140,8 +140,8 @@ th{color:var(--mu);font-weight:600;font-size:12px}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 // >>> Preencha com os dados do seu projeto Supabase (Project Settings > API)
-const SB_URL='https://wbwzwqrfvwymuluznqyt.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indid3p3cXJmdnd5bXVsdXpucXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxODk4NDgsImV4cCI6MjEwNzc2NTg0OH0.aR1a1AtZ5jB-r7GpQ7F4O4IyQbOp8lrHkSZlvpPcx0A';
+const SB_URL='COLE_AQUI_A_URL_DO_PROJETO';
+const SB_KEY='COLE_AQUI_A_ANON_KEY';
 const $=id=>document.getElementById(id);
 const R=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -342,10 +342,11 @@ async function pull(){
   if(r.status==='Aprovado'){o.aprovadoEm=new Date().toLocaleDateString('pt-BR');baixaEstoque(o)}});
  return ch}
 async function push(){
+ const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('sessão expirada, entre de novo');const uid_=session.user.id;
  const e=DB.emp||{},empresa={nome:e.nome||'',doc:e.doc||'',tel:e.tel||'',mail:e.mail||'',logo:e.logo||''};
  const rows=DB.orc.filter(o=>o.token).map(o=>({id:o.id,token:o.token,numero:o.n,data:iso(o.data),cliente:o.cli,contato:o.contato||'',tipo:o.tipo,descricao:o.desc||'',itens:o.itens,total:o.total,empresa,status:o.status,nota:o.nota||null,rev:o.rev||0,pago:o.pago||0}));
  if(rows.length){const {error}=await sb.from('orcamentos').upsert(rows,{onConflict:'id'});if(error)throw error}
- const {error:e2}=await sb.from('dados').upsert({owner:user.id,conteudo:DB,atualizado:new Date().toISOString()},{onConflict:'owner'});if(e2)throw e2;const {error:e3}=await sb.from('perfil_publico').upsert({owner:user.id,nome:e.nome||'',tel:e.tel||'',logo:e.logo||''},{onConflict:'owner'});if(e3)throw e3}
+ const {error:e2}=await sb.from('dados').upsert({owner:uid_,conteudo:DB,atualizado:new Date().toISOString()},{onConflict:'owner'});if(e2)throw e2;const {error:e3}=await sb.from('perfil_publico').upsert({owner:uid_,nome:e.nome||'',tel:e.tel||'',logo:e.logo||''},{onConflict:'owner'});if(e3)throw e3}
 async function sync(){if(!user)return;setSync('salvando…');
  try{if(await pull())render();await pullSol();await push();setSync('salvo ✓')}catch(e){setSync('erro ao salvar: '+((e&&(e.message||e.code))||''));console.error(e)}}
 async function entrar(u){user=u;$('auth').style.display='none';

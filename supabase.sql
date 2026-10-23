@@ -1,5 +1,17 @@
 -- Cole este arquivo inteiro em: Supabase > SQL Editor > New query > Run
 
+-- Limpa regras de acesso antigas das tabelas deste app (elas são recriadas logo abaixo)
+do $$
+declare r record;
+begin
+  for r in select schemaname, tablename, policyname from pg_policies
+           where schemaname = 'public'
+             and tablename in ('orcamentos','dados','solicitacoes','perfil_publico')
+  loop
+    execute format('drop policy %I on %I.%I', r.policyname, r.schemaname, r.tablename);
+  end loop;
+end $$;
+
 create table if not exists public.orcamentos (
   id uuid primary key default gen_random_uuid(),
   token uuid not null unique default gen_random_uuid(),   -- vai no link enviado ao cliente
@@ -22,6 +34,7 @@ create table if not exists public.orcamentos (
   created_at timestamptz not null default now()
 );
 
+alter table public.orcamentos add column if not exists condicoes jsonb not null default '{}';
 alter table public.orcamentos enable row level security;
 
 -- Só o dono (você, logado) lê e altera os próprios orçamentos
@@ -35,7 +48,7 @@ returns json language sql security definer set search_path = public as $$
   select json_build_object(
     'numero', numero, 'data', data, 'cliente', cliente, 'contato', contato,
     'descricao', descricao, 'itens', itens, 'total', total, 'empresa', empresa,
-    'status', status, 'rev', rev, 'nota', nota)
+    'status', status, 'rev', rev, 'nota', nota, 'condicoes', condicoes)
   from public.orcamentos where token = p_token
 $$;
 
@@ -130,3 +143,6 @@ revoke all on function public.empresa_publica(uuid) from public;
 revoke all on function public.criar_solicitacao(uuid, jsonb) from public;
 grant execute on function public.empresa_publica(uuid) to anon, authenticated;
 grant execute on function public.criar_solicitacao(uuid, jsonb) to anon, authenticated;
+
+-- Permissões das tabelas para quem está logado
+grant select, insert, update, delete on public.orcamentos, public.dados, public.solicitacoes, public.perfil_publico to authenticated;

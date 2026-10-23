@@ -46,6 +46,12 @@ async function load(){
 }
 
 function show(o){
+  const c=o.condicoes||{},tem=Object.keys(c).length>0,v=c.val||10,L=[];
+  if(tem){L.push('Validade da proposta: '+v+' dias (até '+new Date(new Date(o.data+'T00:00:00').getTime()+v*864e5).toLocaleDateString('pt-BR')+')');
+    if(c.prazo)L.push('Prazo para execução do serviço: '+c.prazo);
+    L.push('Garantia de serviço: '+(c.gs||'90 dias'));
+    L.push('Garantia de equipamentos: '+(c.ge||'1 ano, conforme o fabricante'));
+    L.push('Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+R(o.total/(c.parc||1)):'PIX'))}
   const e=o.empresa||{},aberto=o.status==='Pendente'||o.status==='Em revisão';
   $('app').innerHTML=`
   <div class="card">${e.logo&&String(e.logo).startsWith('data:image/')?'<img src="'+e.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':''}<h1>${esc(e.nome||'Orçamento')}</h1>
@@ -57,7 +63,7 @@ function show(o){
     <table><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
     ${(o.itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td class="r">${esc(i.q)}</td><td class="r">${R(i.u)}</td><td class="r">${R(i.q*i.u)}</td></tr>`).join('')}
     </tbody></table>
-    <div class="tot">Total: ${R(o.total)}</div></div>
+    <div class="tot">Total: ${R(o.total)}</div>${L.length?'<div style="margin-top:12px;font-size:13px"><b>Condições</b><br>'+L.map(esc).join('<br>')+'</div>':''}</div>
   ${aberto?`<div class="card"><b>Sua resposta</b>
     <textarea id="nota" placeholder="Observações. Para pedir revisão, diga quais itens incluir ou retirar."></textarea>
     <div class="b"><button class="a" onclick="resp('Aprovado')">Aprovar</button>

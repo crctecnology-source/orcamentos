@@ -3,22 +3,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Orçamento</title>
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mu:#667085;--bd:#dfe3ea;--ok:#2e9d5b;--no:#c62828;--rv:#1f6feb}
-@media (prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1c2027;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2d333d}}
+:root{--h:215;--s:70%;--l:42%;--ac:hsl(var(--h) var(--s) var(--l));--ac-d:hsl(var(--h) var(--s) calc(var(--l) - 10%));--ac2:hsl(var(--h) calc(var(--s) * .55) 94%);--on:#fff;--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#667085;--bd:#e1e5ec;--dg:#c62828;--okc:#1f8a4c;--sh:0 1px 2px rgba(16,24,40,.06),0 2px 8px rgba(16,24,40,.04)}
+@media (prefers-color-scheme:dark){:root{--l:64%;--ac2:hsl(var(--h) calc(var(--s) * .45) 21%);--on:#0d1117;--bg:#12151a;--card:#1a1e25;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2b313b;--dg:#ff7b7b;--okc:#4cc38a;--sh:none}}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-main{max-width:680px;margin:auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
-h1{font-size:18px;margin:0}.mu{color:var(--mu);font-size:13px}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:700px;margin:auto;padding:0 16px 48px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+.card.brand{background:var(--ac);color:var(--on);border:0;border-radius:0 0 20px 20px;margin:0 -16px 16px;padding:24px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.card.brand img{background:#fff;border-radius:11px;padding:5px;margin:0!important}
+.card.brand .mu{color:inherit;opacity:.92}
+h1{font-size:20px;margin:0}.mu{color:var(--mu);font-size:13px}
 table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
-th,td{text-align:left;padding:7px 4px;border-bottom:1px solid var(--bd)}th{color:var(--mu);font-size:12px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--bd)}th{color:var(--mu);font-size:12px;text-transform:uppercase;letter-spacing:.03em}
 td.r,th.r{text-align:right}
-.tot{text-align:right;font-size:20px;font-weight:700;margin-top:12px}
-textarea{width:100%;min-height:80px;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;margin-top:6px}
-.b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-button{flex:1;min-width:140px;border:0;border-radius:9px;padding:12px;color:#fff;font:600 15px inherit;cursor:pointer}
-.a{background:var(--ok)}.n{background:var(--no)}.v{background:var(--rv)}
-.st{font-weight:700;padding:10px;border-radius:8px;background:var(--bg);text-align:center;margin-top:12px}
+.tot{text-align:right;font-size:22px;font-weight:700;margin-top:14px;color:var(--ac)}
+textarea{width:100%;min-height:84px;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;margin-top:8px}
+textarea:focus{outline:2px solid var(--ac);border-color:var(--ac)}
+.b{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+button{flex:1;min-width:140px;border:0;border-radius:11px;padding:14px;color:#fff;font:700 15px inherit;cursor:pointer}
+button:hover{filter:brightness(.93)}
+.a{background:#1f8a4c}.n{background:#c62828}.v{background:var(--ac);color:var(--on)}
+.st{font-weight:700;padding:12px;border-radius:10px;background:var(--ac2);color:var(--ac);text-align:center;margin-top:12px}
 </style></head><body><main id="app"><p class="mu">Carregando…</p></main>
 <script>
 // >>> Preencha com os dados do seu projeto Supabase (Project Settings > API)
@@ -26,6 +32,12 @@ const SUPABASE_URL='https://wbwzwqrfvwymuluznqyt.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indid3p3cXJmdnd5bXVsdXpucXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxODk4NDgsImV4cCI6MjEwNzc2NTg0OH0.aR1a1AtZ5jB-r7GpQ7F4O4IyQbOp8lrHkSZlvpPcx0A';
 
 const $=id=>document.getElementById(id);
+function hex2hsl(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return null;const n=parseInt(m[1],16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360}return{h,s:Math.round(s*100)}}
+function applyTheme(hex){const c=hex2hsl(hex),r=document.documentElement.style;
+ if(!c||c.s<12){r.removeProperty('--h');r.removeProperty('--s');return}
+ r.setProperty('--h',c.h);r.setProperty('--s',Math.min(85,Math.max(45,c.s))+'%');
+ try{localStorage.setItem('orc-tema',hex)}catch(e){}}
+try{applyTheme(localStorage.getItem('orc-tema'))}catch(e){}
 const R=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const token=new URLSearchParams(location.search).get('t');
@@ -45,7 +57,7 @@ async function load(){
   catch(e){msg('Não foi possível carregar o orçamento. Tente novamente em instantes.')}
 }
 
-function show(o){
+function show(o){applyTheme((o.empresa||{}).cor);
   const c=o.condicoes||{},tem=Object.keys(c).length>0,v=c.val||10,L=[];
   if(tem){L.push('Validade da proposta: '+v+' dias (até '+new Date(new Date(o.data+'T00:00:00').getTime()+v*864e5).toLocaleDateString('pt-BR')+')');
     if(c.prazo)L.push('Prazo para execução do serviço: '+c.prazo);
@@ -54,7 +66,7 @@ function show(o){
     L.push('Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+R(o.total/(c.parc||1)):'PIX'))}
   const e=o.empresa||{},aberto=o.status==='Pendente'||o.status==='Em revisão';
   $('app').innerHTML=`
-  <div class="card">${e.logo&&String(e.logo).startsWith('data:image/')?'<img src="'+e.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':''}<h1>${esc(e.nome||'Orçamento')}</h1>
+  <div class="card brand">${e.logo&&String(e.logo).startsWith('data:image/')?'<img src="'+e.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':''}<h1>${esc(e.nome||'Orçamento')}</h1>
     <div class="mu">${esc([e.doc,e.tel,e.mail].filter(Boolean).join(' · '))}</div></div>
   <div class="card">
     <b>Orçamento nº ${esc(o.numero)}${o.rev?' (revisão '+o.rev+')':''}</b>

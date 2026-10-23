@@ -86,7 +86,7 @@ create policy dono on public.dados for all
 drop table if exists public.perfil_publico cascade;
 create table public.perfil_publico (
   owner uuid primary key references auth.users(id),
-  nome text, tel text, logo text
+  nome text, tel text, logo text, cor text
 );
 alter table public.perfil_publico enable row level security;
 drop policy if exists dono on public.perfil_publico;
@@ -115,7 +115,7 @@ create policy dono on public.solicitacoes for all
 -- Página pública: dados da empresa (nome, telefone, logo)
 create or replace function public.empresa_publica(p_owner uuid)
 returns json language sql security definer set search_path = public as $$
-  select json_build_object('nome', nome, 'tel', tel, 'logo', logo)
+  select json_build_object('nome', nome, 'tel', tel, 'logo', logo, 'cor', cor)
   from public.perfil_publico where owner = p_owner
 $$;
 

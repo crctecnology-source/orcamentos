@@ -3,20 +3,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Solicitações</title>
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mu:#667085;--bd:#dfe3ea;--ac:#1f6feb;--dg:#c62828}
-@media (prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1c2027;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2d333d;--ac:#5b9cff;--dg:#ff6b6b}}
+:root{--h:215;--s:70%;--l:42%;--ac:hsl(var(--h) var(--s) var(--l));--ac-d:hsl(var(--h) var(--s) calc(var(--l) - 10%));--ac2:hsl(var(--h) calc(var(--s) * .55) 94%);--on:#fff;--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#667085;--bd:#e1e5ec;--dg:#c62828;--okc:#1f8a4c;--sh:0 1px 2px rgba(16,24,40,.06),0 2px 8px rgba(16,24,40,.04)}
+@media (prefers-color-scheme:dark){:root{--l:64%;--ac2:hsl(var(--h) calc(var(--s) * .45) 21%);--on:#0d1117;--bg:#12151a;--card:#1a1e25;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2b313b;--dg:#ff7b7b;--okc:#4cc38a;--sh:none}}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-main{max-width:640px;margin:auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
-h1{font-size:18px;margin:0}h2{font-size:16px;margin:0 0 10px}.mu{color:var(--mu);font-size:13px}
-.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:10px}.w2{grid-column:span 2}
-label{display:block;font-size:12px;color:var(--mu);margin-bottom:3px}
-input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
-textarea{min-height:110px;resize:vertical}
-button,.btn{display:inline-block;border:0;border-radius:9px;padding:12px 18px;background:var(--ac);color:#fff;font:600 15px inherit;cursor:pointer;text-decoration:none}
-button:disabled{opacity:.6}.err{color:var(--dg);margin:8px 0}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif}
+main{max-width:680px;margin:auto;padding:0 16px 48px}
+#hd{background:var(--ac);color:var(--on);border:0;border-radius:0 0 20px 20px;padding:26px 22px;margin:0 -16px 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+#hd img{max-height:54px;max-width:150px;background:#fff;border-radius:11px;padding:5px;margin:0!important}
+#hd h1{font-size:21px;margin:0}#hd .mu{color:inherit;opacity:.92}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--sh)}
+h1{font-size:20px;margin:0}
+h2{font-size:15px;margin:18px 0 10px;padding-left:10px;border-left:4px solid var(--ac)}
+h2:first-child{margin-top:0}
+.mu{color:var(--mu);font-size:13px}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:6px}.w2{grid-column:span 2}
+label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:4px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;min-height:44px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);border-color:var(--ac)}
+textarea{min-height:120px;resize:vertical}
+button,.btn{display:inline-block;border:0;border-radius:11px;padding:13px 22px;background:var(--ac);color:var(--on);font:700 15px inherit;cursor:pointer;text-decoration:none;margin-top:8px}
+button:hover,.btn:hover{background:var(--ac-d)}button:disabled{opacity:.6}
+#go{width:100%}
+.err{color:var(--dg);margin:8px 0}
 .hp{position:absolute;left:-9999px;height:0;overflow:hidden}
+@media (max-width:600px){.w2{grid-column:1/-1}}
 </style></head><body><main>
 <div class="card" id="hd"><h1>Solicitações</h1></div>
 <form id="f" class="card" autocomplete="on">
@@ -59,6 +70,12 @@ const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const owner=new URLSearchParams(location.search).get('e');
 let emp={};
+function hex2hsl(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return null;const n=parseInt(m[1],16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360}return{h,s:Math.round(s*100)}}
+function applyTheme(hex){const c=hex2hsl(hex),r=document.documentElement.style;
+ if(!c||c.s<12){r.removeProperty('--h');r.removeProperty('--s');return}
+ r.setProperty('--h',c.h);r.setProperty('--s',Math.min(85,Math.max(45,c.s))+'%');
+ try{localStorage.setItem('orc-tema',hex)}catch(e){}}
+try{applyTheme(localStorage.getItem('orc-tema'))}catch(e){}
 async function rpc(fn,body){
   const h={'Content-Type':'application/json',apikey:SB_KEY};
   if(SB_KEY.startsWith('eyJ'))h.Authorization='Bearer '+SB_KEY;
@@ -73,7 +90,7 @@ async function rpc(fn,body){
   if(!emp.nome){$('f').style.display='none';
     $('hd').innerHTML=falha?'<p>Não foi possível conectar ao servidor. Confira a URL e a chave neste arquivo e se o SQL foi executado no Supabase.</p>'
       :'<p>Empresa não encontrada. Entre no painel (index.html), preencha o nome da empresa em "Dados da empresa" e aguarde aparecer "salvo ✓".</p>';return}
-  $('hd').innerHTML=(emp.logo&&String(emp.logo).startsWith('data:image/')?'<img src="'+emp.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':'')+'<h1>'+esc(emp.nome)+'</h1><div class="mu">Faça sua solicitação abaixo. Entraremos em contato.</div>';
+  applyTheme(emp.cor);$('hd').innerHTML=(emp.logo&&String(emp.logo).startsWith('data:image/')?'<img src="'+emp.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':'')+'<div><h1>'+esc(emp.nome)+'</h1><div class="mu">Faça sua solicitação abaixo. Entraremos em contato.</div></div>';
 })();
 
 $('cep').oninput=async e=>{

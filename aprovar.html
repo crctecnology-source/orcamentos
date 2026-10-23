@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Orçamento</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--tx:#1d2330;--mu:#667085;--bd:#dfe3ea;--ok:#2e9d5b;--no:#c62828;--rv:#1f6feb}
+@media (prefers-color-scheme:dark){:root{--bg:#14171c;--card:#1c2027;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2d333d}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:680px;margin:auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+h1{font-size:18px;margin:0}.mu{color:var(--mu);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{text-align:left;padding:7px 4px;border-bottom:1px solid var(--bd)}th{color:var(--mu);font-size:12px}
+td.r,th.r{text-align:right}
+.tot{text-align:right;font-size:20px;font-weight:700;margin-top:12px}
+textarea{width:100%;min-height:80px;padding:9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;margin-top:6px}
+.b{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{flex:1;min-width:140px;border:0;border-radius:9px;padding:12px;color:#fff;font:600 15px inherit;cursor:pointer}
+.a{background:var(--ok)}.n{background:var(--no)}.v{background:var(--rv)}
+.st{font-weight:700;padding:10px;border-radius:8px;background:var(--bg);text-align:center;margin-top:12px}
+</style></head><body><main id="app"><p class="mu">Carregando…</p></main>
+<script>
+// >>> Preencha com os dados do seu projeto Supabase (Project Settings > API)
+const SUPABASE_URL='https://wbwzwqrfvwymuluznqyt.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indid3p3cXJmdnd5bXVsdXpucXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxODk4NDgsImV4cCI6MjEwNzc2NTg0OH0.aR1a1AtZ5jB-r7GpQ7F4O4IyQbOp8lrHkSZlvpPcx0A';
+
+const $=id=>document.getElementById(id);
+const R=n=>(+n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const token=new URLSearchParams(location.search).get('t');
+const msg=t=>{$('app').innerHTML='<div class="card">'+esc(t)+'</div>'};
+
+async function rpc(fn,body){
+  const h={'Content-Type':'application/json',apikey:SUPABASE_KEY};
+  if(SUPABASE_KEY.startsWith('eyJ'))h.Authorization='Bearer '+SUPABASE_KEY;
+  const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:h,body:JSON.stringify(body)});
+  if(!r.ok)throw new Error(r.status);return r.json();
+}
+
+async function load(){
+  if(!token)return msg('Link inválido.');
+  try{const o=await rpc('orcamento_publico',{p_token:token});
+    if(!o)return msg('Orçamento não encontrado.');show(o)}
+  catch(e){msg('Não foi possível carregar o orçamento. Tente novamente em instantes.')}
+}
+
+function show(o){
+  const e=o.empresa||{},aberto=o.status==='Pendente'||o.status==='Em revisão';
+  $('app').innerHTML=`
+  <div class="card">${e.logo&&String(e.logo).startsWith('data:image/')?'<img src="'+e.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':''}<h1>${esc(e.nome||'Orçamento')}</h1>
+    <div class="mu">${esc([e.doc,e.tel,e.mail].filter(Boolean).join(' · '))}</div></div>
+  <div class="card">
+    <b>Orçamento nº ${esc(o.numero)}${o.rev?' (revisão '+o.rev+')':''}</b>
+    <div class="mu">${esc(o.data)} · Cliente: ${esc(o.cliente)}${o.contato?' (A/C '+esc(o.contato)+')':''}</div>
+    ${o.descricao?'<p>'+esc(o.descricao)+'</p>':''}
+    <table><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
+    ${(o.itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td class="r">${esc(i.q)}</td><td class="r">${R(i.u)}</td><td class="r">${R(i.q*i.u)}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="tot">Total: ${R(o.total)}</div></div>
+  ${aberto?`<div class="card"><b>Sua resposta</b>
+    <textarea id="nota" placeholder="Observações. Para pedir revisão, diga quais itens incluir ou retirar."></textarea>
+    <div class="b"><button class="a" onclick="resp('Aprovado')">Aprovar</button>
+    <button class="n" onclick="resp('Recusado')">Rejeitar</button>
+    <button class="v" onclick="resp('Em revisão')">Pedir revisão</button></div></div>`
+  :`<div class="st">Status: ${esc(o.status)}</div>`}
+  ${o.status==='Em revisão'?'<p class="mu">Seu pedido de revisão foi enviado. Você pode responder de novo quando receber o orçamento atualizado.</p>':''}`;
+}
+
+window.resp=async r=>{
+  const nota=$('nota').value.trim();
+  if(r==='Em revisão'&&!nota)return alert('Escreva quais itens deseja incluir ou retirar.');
+  if(r!=='Em revisão'&&!confirm((r==='Aprovado'?'Aprovar':'Rejeitar')+' este orçamento?'))return;
+  try{const s=await rpc('responder_orcamento',{p_token:token,p_resposta:r,p_nota:nota});
+    if(s==='indisponivel')alert('Este orçamento já foi respondido.');
+    await load();
+  }catch(e){alert('Não foi possível enviar sua resposta. Tente novamente.')}
+};
+load();
+</script></body></html>

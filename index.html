@@ -3,24 +3,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Orçamentos</title>
 <style>
-:root{--h:215;--s:70%;--l:42%;--ac:hsl(var(--h) var(--s) var(--l));--ac-d:hsl(var(--h) var(--s) calc(var(--l) - 10%));--ac2:hsl(var(--h) calc(var(--s) * .55) 94%);--on:#fff;--bg:#f4f6f9;--card:#fff;--tx:#1b2430;--mu:#667085;--bd:#e1e5ec;--dg:#c62828;--okc:#1f8a4c;--sh:0 1px 2px rgba(16,24,40,.06),0 2px 8px rgba(16,24,40,.04)}
-@media (prefers-color-scheme:dark){:root{--l:64%;--ac2:hsl(var(--h) calc(var(--s) * .45) 21%);--on:#0d1117;--bg:#12151a;--card:#1a1e25;--tx:#e8ebf0;--mu:#9aa3b2;--bd:#2b313b;--dg:#ff7b7b;--okc:#4cc38a;--sh:none}}
-
+/* paleta da logo: azul, vermelho, verde, prata e azul-marinho */
+:root{--h:209;--s:92%;--l:44%;--ac:hsl(var(--h) var(--s) var(--l));--ac-d:hsl(var(--h) var(--s) calc(var(--l) - 9%));--ac2:hsl(var(--h) calc(var(--s) * .5) 95%);--hd:hsl(var(--h) 90% 7%);--stripe:linear-gradient(90deg,var(--ac) 0,#e11d25 55%,#62b312 100%);--on:#fff;--bg:#f1f5fb;--card:#fff;--tx:#0e1a2e;--mu:#5d6b82;--bd:#dde4ef;--dg:#d71920;--okc:#3a8d12;--sh:0 1px 2px rgba(8,20,45,.06),0 3px 12px rgba(8,20,45,.05)}
+@media (prefers-color-scheme:dark){:root{--l:55%;--ac2:hsl(var(--h) calc(var(--s) * .45) 20%);--hd:hsl(var(--h) 90% 5%);--bg:#070d1a;--card:#0f1829;--tx:#e7edf8;--mu:#93a1b8;--bd:#1f2d46;--dg:#ff6b6f;--okc:#7ed321;--sh:none}}
 *{box-sizing:border-box}
 html{scroll-padding-top:120px}
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Segoe UI",system-ui,-apple-system,Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom,0px)}
-.top{background:var(--ac);color:var(--on);position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px);box-shadow:0 2px 10px rgba(0,0,0,.12)}
-.bar{max-width:1040px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px}
+.top{background:var(--hd);color:#fff;position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top,0px);box-shadow:0 2px 12px rgba(0,0,0,.22)}
+.top::after{content:"";display:block;height:4px;background:var(--stripe)}
+.bar{max-width:1040px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.brand img{height:36px;max-width:130px;object-fit:contain;background:#fff;border-radius:9px;padding:3px}
+.brand img{height:44px;max-width:170px;object-fit:contain;border-radius:8px}
 .brand b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rt{display:flex;align-items:center;gap:10px;font-size:12px;flex:none}
-.rt button{background:rgba(128,128,128,.28);color:inherit;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
+.rt{display:flex;align-items:center;gap:10px;font-size:12px;flex:none;color:#c9d6ea}
+.rt button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:8px;padding:6px 12px;cursor:pointer;font:inherit}
 nav{max-width:1040px;margin:auto;display:flex;gap:2px;overflow-x:auto;padding:0 10px;scrollbar-width:none}
 nav::-webkit-scrollbar{display:none}
-nav button{flex:none;background:none;border:0;color:inherit;opacity:.78;padding:11px 14px;font:600 14px inherit;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+nav button{flex:none;background:none;border:0;color:#fff;opacity:.72;padding:11px 14px;font:600 14px inherit;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
 nav button:hover{opacity:1}
-nav button.on{opacity:1;border-bottom-color:currentColor}
+nav button.on{opacity:1;border-bottom-color:hsl(var(--h) 95% 66%)}
 main{max-width:1040px;margin:auto;padding:16px 16px 56px}
 section{display:none}section.on{display:block}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
@@ -32,11 +33,13 @@ label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom
 input,select,textarea{width:100%;padding:10px 11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;min-height:42px}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);border-color:var(--ac)}
 input[type=color]{padding:3px;height:42px;cursor:pointer}
+input.q{margin-bottom:10px}
 textarea{min-height:80px;resize:vertical}
 .btn{background:var(--ac);color:var(--on);border:0;padding:11px 18px;border-radius:10px;cursor:pointer;font:600 14px inherit;margin-top:12px;min-height:42px}
 .btn:hover{background:var(--ac-d)}
 .btn.s{background:var(--ac2);color:var(--ac)}
 .btn.s:hover{filter:brightness(.96);background:var(--ac2)}
+.btn.dgr{background:var(--dg);color:#fff}.btn.dgr:hover{filter:brightness(.92);background:var(--dg)}
 .x{background:none;border:0;color:var(--dg);cursor:pointer;font:inherit;padding:4px 6px}
 .ed{background:none;border:0;color:var(--ac);cursor:pointer;font:600 13px inherit;padding:4px 6px;text-decoration:none}
 .ed:hover,.x:hover{text-decoration:underline}
@@ -49,9 +52,21 @@ tbody tr:hover{background:var(--ac2)}
 .low{color:var(--dg);font-weight:600}.ok{color:var(--okc);font-weight:600}
 .mu{color:var(--mu);font-size:13px}
 .bd{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--ac2);color:var(--ac)}
-.bd.ok2{background:rgba(31,138,76,.15);color:var(--okc)}.bd.no{background:rgba(198,40,40,.13);color:var(--dg)}.bd.rev{background:rgba(217,119,6,.16);color:#b45309}
-.dot{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#e53935;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:5px}
-@media (max-width:600px){.w2{grid-column:1/-1}.bar{padding:8px 12px}.brand b{font-size:15px}main{padding:12px 12px 56px}}
+.bd.ok2{background:rgba(98,179,18,.18);color:var(--okc)}.bd.no{background:rgba(215,25,32,.13);color:var(--dg)}.bd.rev{background:rgba(217,119,6,.16);color:#b45309}
+.dot{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#e11d25;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:5px}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;width:calc(100% - 24px);max-width:440px;pointer-events:none}
+.toast{background:#071428;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;box-shadow:0 6px 22px rgba(0,0,0,.3);transition:opacity .3s;border-left:4px solid var(--ac)}
+.toast.ok{border-left-color:#62b312}.toast.err{border-left-color:#e11d25}
+.ov{position:fixed;inset:0;z-index:95;background:rgba(2,10,30,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+.dg{max-width:500px;width:100%;max-height:85vh;overflow:auto;margin:0}
+.dgb{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:4px}
+.pb{height:8px;border-radius:6px;background:var(--ac2);margin:10px 0}
+.pb i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,var(--ac),#62b312)}
+.st-i{display:flex;align-items:center;gap:10px;padding:9px 6px;border-radius:10px;cursor:pointer;font-size:14px}
+.st-i:hover{background:var(--ac2)}
+.st-i .ck{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac2);color:var(--ac);display:grid;place-items:center;font-size:12px;font-weight:700}
+.st-i.done{color:var(--mu);text-decoration:line-through}.st-i.done .ck{background:#62b312;color:#fff}
+@media (max-width:600px){.w2{grid-column:1/-1}.bar{padding:6px 12px}.brand b{font-size:15px}.brand img{height:38px}main{padding:12px 12px 56px}}
 </style></head><body>
 <div id="auth" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto"><div class="card" style="width:100%;max-width:360px;margin:0"><h2>Orçamentos — acesso</h2>
 <label>E-mail</label><input id="a-email" type="email" autocomplete="username">
@@ -63,7 +78,7 @@ tbody tr:hover{background:var(--ac2)}
 <header class="top"><div class="bar"><div class="brand"><img id="b-logo" alt="" style="display:none"><b id="b-nome">Orçamentos</b></div><div class="rt"><span id="sync"></span><button id="sair">Sair</button></div></div><nav id="nav"></nav></header>
 <main>
 
-<section id="s-orc" class="on">
+<section id="s-orc" class="on"><div id="onb"></div>
 <div class="card"><h2>Novo orçamento</h2>
 <div class="g">
 <div><label>Tipo de orçamento</label><select id="o-tipo"><option>Serviço</option><option>Produto</option><option>Produto e serviço</option></select></div>
@@ -91,8 +106,8 @@ tbody tr:hover{background:var(--ac2)}
 </div>
 <button class="btn" id="o-save">Salvar orçamento</button><button class="btn s" id="o-cancel" style="display:none;margin-left:8px">Cancelar edição</button>
 </div>
-<div class="card"><h2>Dados da empresa (aparecem no PDF)</h2><div class="g"><div class="w2"><label>Nome da empresa</label><input id="e-nome"></div><div><label>CNPJ ou CPF</label><input id="e-doc"></div><div><label>Telefone</label><input id="e-tel"></div><div class="w2"><label>E-mail</label><input id="e-mail"></div><div class="w2"><label>Endereço completo</label><input id="e-end" placeholder="Rua, número, bairro, cidade/UF, CEP"></div><div><label>Cor da marca</label><input id="e-cor" type="color" value="#1f6feb"></div><div class="w2"><label>Logo da empresa (PNG ou JPG)</label><input id="e-logo" type="file" accept="image/png,image/jpeg"><div id="e-prev" style="margin-top:6px"></div><button class="x" id="e-rm" type="button" style="display:none">remover logo</button></div></div></div>
-<div class="card"><h2>Orçamentos salvos</h2><div class="tw"><table><thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Status</th><th>Pagamento</th><th></th></tr></thead><tbody id="o-list"></tbody></table></div></div>
+<div class="card"><h2>Dados da empresa (aparecem no PDF)</h2><div class="g"><div class="w2"><label>Nome da empresa</label><input id="e-nome"></div><div><label>CNPJ ou CPF</label><input id="e-doc"></div><div><label>Telefone</label><input id="e-tel"></div><div class="w2"><label>E-mail</label><input id="e-mail"></div><div class="w2"><label>Endereço completo</label><input id="e-end" placeholder="Rua, número, bairro, cidade/UF, CEP"></div><div><label>Cor da marca</label><input id="e-cor" type="color" value="#0974d7"></div><div class="w2"><label>Logo da empresa (PNG ou JPG)</label><input id="e-logo" type="file" accept="image/png,image/jpeg"><div id="e-prev" style="margin-top:6px"></div><button class="x" id="e-rm" type="button" style="display:none">remover logo</button></div></div></div>
+<div class="card"><h2>Orçamentos salvos</h2><input class="q" data-t="#o-list tr" placeholder="Buscar por número, cliente, status…"><div class="tw"><table><thead><tr><th>Nº</th><th>Data</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Status</th><th>Pagamento</th><th></th></tr></thead><tbody id="o-list"></tbody></table></div></div>
 </section>
 
 <section id="s-cli">
@@ -115,7 +130,7 @@ tbody tr:hover{background:var(--ac2)}
 <div id="c-msg" class="mu"></div>
 <button class="btn" id="c-save">Salvar cliente</button>
 </div>
-<div class="card"><div class="tw"><table><thead><tr><th>Nome</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
+<div class="card"><input class="q" data-t="#c-list tr" placeholder="Buscar cliente por nome, CNPJ, telefone…"><div class="tw"><table><thead><tr><th>Nome</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
 </section>
 
 <section id="s-prod">
@@ -134,7 +149,7 @@ tbody tr:hover{background:var(--ac2)}
 <div id="p-res" style="margin-top:6px"></div>
 <button class="btn" id="p-save">Salvar produto</button>
 </div>
-<div class="card"><h2>Estoque</h2><div class="tw"><table><thead><tr><th>Código</th><th>Descrição</th><th>Compra</th><th>Venda</th><th>% sobre custo</th><th>Resultado</th><th>Estoque</th><th></th></tr></thead><tbody id="p-list"></tbody></table></div></div>
+<div class="card"><h2>Estoque</h2><input class="q" data-t="#p-list tr" placeholder="Buscar produto por descrição ou código…"><div class="tw"><table><thead><tr><th>Código</th><th>Descrição</th><th>Compra</th><th>Venda</th><th>% sobre custo</th><th>Resultado</th><th>Estoque</th><th></th></tr></thead><tbody id="p-list"></tbody></table></div></div>
 </section>
 
 <section id="s-serv">
@@ -150,10 +165,10 @@ tbody tr:hover{background:var(--ac2)}
 <div id="v-res" style="margin-top:8px"></div>
 <button class="btn" id="v-save">Salvar serviço</button>
 </div>
-<div class="card"><div class="tw"><table><thead><tr><th>Código</th><th>Tipo</th><th>Custo</th><th>Valor final</th><th>% sobre custo</th><th>Resultado</th><th></th></tr></thead><tbody id="v-list"></tbody></table></div></div>
+<div class="card"><input class="q" data-t="#v-list tr" placeholder="Buscar serviço…"><div class="tw"><table><thead><tr><th>Código</th><th>Tipo</th><th>Custo</th><th>Valor final</th><th>% sobre custo</th><th>Resultado</th><th></th></tr></thead><tbody id="v-list"></tbody></table></div></div>
 </section>
 <section id="s-sol"><div class="card"><h2>Link para seus clientes</h2><div class="mu">Envie este link ou coloque no seu site. Qualquer pessoa pode fazer uma solicitação, sem login.</div><div style="display:flex;gap:8px;margin-top:8px"><input id="s-link" readonly><button class="btn s" id="s-copy" style="margin:0">Copiar</button></div></div>
-<div id="s-list"></div></section>
+<input class="q" data-t="#s-list>.card" placeholder="Buscar solicitação por cliente, tipo ou texto…" style="margin-bottom:12px"><div id="s-list"></div></section>
 <section id="s-fin"><div class="card"><h2>Finanças</h2><div class="mu">Considera os orçamentos aprovados.</div><div class="g" style="margin-top:8px">
 <div><label>Aprovados de</label><input id="f-de" type="date"></div>
 <div><label>Até</label><input id="f-ate" type="date"></div>
@@ -215,15 +230,15 @@ async function buscaCep(c){
  }catch(e){$('c-msg').textContent='Não foi possível buscar o CEP aqui; preencha o endereço manualmente.'}}
 
 // salvar cadastros
-function upsert(list,obj){const i=DB[list].findIndex(x=>x.id===obj.id);i>=0?DB[list][i]=obj:DB[list].push(obj);save()}
+function upsert(list,obj){const i=DB[list].findIndex(x=>x.id===obj.id);i>=0?DB[list][i]=obj:DB[list].push(obj);save();toast(i>=0?'Alterações salvas.':'Cadastro salvo.','ok')}
 function clear(ids){ids.forEach(i=>$(i).value='')}
-$('c-save').onclick=()=>{if(!$('c-nome').value.trim())return alert('Informe o nome do cliente.');
+$('c-save').onclick=()=>{if(!$('c-nome').value.trim())return toast('Informe o nome do cliente.');
  upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
  clear(['c-id','c-nome','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);render()};
-$('p-save').onclick=()=>{if(!$('p-desc').value.trim())return alert('Informe a descrição.');
+$('p-save').onclick=()=>{if(!$('p-desc').value.trim())return toast('Informe a descrição.');
  upsert('prod',{id:$('p-id').value||uid(),desc:$('p-desc').value.trim(),cod:$('p-cod').value,compra:num('p-compra'),venda:num('p-venda'),qtd:num('p-qtd'),min:num('p-min')});
  clear(['p-id','p-desc','p-cod','p-compra','p-pct','p-venda','p-qtd','p-min']);render()};
-$('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return alert('Informe o tipo de serviço.');
+$('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return toast('Informe o tipo de serviço.');
  upsert('serv',{id:$('v-id').value||uid(),tipo:$('v-tipo').value.trim(),cod:$('v-cod').value,custo:num('v-custo'),final:num('v-final')});
  clear(['v-id','v-tipo','v-cod','v-custo','v-pct','v-final']);render()};
 
@@ -234,7 +249,7 @@ window.edit=(l,id)=>{const o=DB[l].find(x=>x.id===id);
   serv:{id:'v-id',tipo:'v-tipo',cod:'v-cod',custo:'v-custo',final:'v-final'}}[l];
  for(const k in m)$(m[k]).value=o[k]??'';
  if(l==='prod')$('p-venda').oninput();if(l==='serv')$('v-final').oninput();upd();window.scrollTo(0,0)};
-window.del=(l,id)=>{if(confirm('Excluir?')){DB[l]=DB[l].filter(x=>x.id!==id);if(l==='orc'&&sb)db.from('orcamentos').delete().eq('id',id).then(()=>{});save();render()}};
+window.del=async(l,id)=>{if(await ask('Excluir este registro?','Esta ação não pode ser desfeita.','Excluir',true)){DB[l]=DB[l].filter(x=>x.id!==id);if(l==='orc'&&sb)db.from('orcamentos').delete().eq('id',id).then(()=>{});save();render()}};
 const acts=(l,id)=>`<button class="ed" onclick="edit('${l}','${id}')">editar</button> <button class="x" onclick="del('${l}','${id}')">excluir</button>`;
 const pct=(c,v)=>c?((v/c-1)*100).toFixed(1)+'%':'—';
 const tag=(c,v)=>{const l=v-c;return `<span class="${l<0?'low':l>0?'ok':'mu'}">${l>0?'Lucro':l<0?'Prejuízo':'Sem lucro'} ${R(Math.abs(l))} · margem ${v?(l/v*100).toFixed(1)+'%':'—'}</span>`};
@@ -249,20 +264,18 @@ $('i-add').onclick=()=>{const k=$('i-kind').value,id=$('i-item').value,q=num('i-
  itens.push({k,id,nome:k==='s'?o.tipo:o.desc,q,u:k==='s'?o.final:o.venda,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;renderItens()};
 function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.u)}</td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum item adicionado.</td></tr>';
  const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
-$('o-save').onclick=()=>{if(!$('o-cli').value)return alert('Escolha um cliente.');if(!itens.length)return alert('Adicione ao menos um item.');
+$('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
  const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond()};
  if(editId){const o=DB.orc.find(x=>x.id===editId);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1})}
  else DB.orc.push(Object.assign({id:crypto.randomUUID(),token:crypto.randomUUID(),n:DB.seq++,data:new Date().toLocaleDateString('pt-BR'),status:'Pendente',pago:0},dados));
- save();cancelEdit();render()};
-window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id);
- alert(`Orçamento nº ${o.n} — ${o.cli}\n${o.data} · ${o.tipo}\n\n${o.desc}\n\n`+o.itens.map(i=>`${i.q}x ${i.nome} = ${R(i.q*i.u)}`).join('\n')+`\n\nTotal: ${R(o.total)}`)};
+ save();cancelEdit();render();toast('Orçamento salvo.','ok')};
 
 const dig=s=>String(s||'').replace(/\D/g,'');
-window.zap=id=>{const o=DB.orc.find(x=>x.id===id);let t=dig(o.tel);if(!t)return alert('Cadastre o telefone/WhatsApp do cliente.');if(t.length<=11)t='55'+t;
+window.zap=id=>{const o=DB.orc.find(x=>x.id===id);let t=dig(o.tel);if(!t)return toast('Cadastre o telefone/WhatsApp do cliente.');if(t.length<=11)t='55'+t;
  const m=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${o.n} (${o.data}):\n\n`+o.itens.map(i=>`• ${i.q}x ${i.nome} — ${R(i.q*i.u)}`).join('\n')+`\n\nTotal: ${R(o.total)}\n\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
  window.open('https://wa.me/'+t+'?text='+encodeURIComponent(m),'_blank')};
-window.setSt=(id,st)=>{const o=DB.orc.find(x=>x.id===id);if(!confirm(st+' o orçamento nº '+o.n+'?'))return;
+window.setSt=async(id,st)=>{const o=DB.orc.find(x=>x.id===id);if(!await ask((st==='Aprovado'?'Aprovar':'Recusar')+' o orçamento nº '+o.n+'?',st==='Aprovado'?'O estoque dos produtos do orçamento será descontado.':'O orçamento ficará como recusado.',st==='Aprovado'?'Aprovar':'Recusar',st!=='Aprovado'))return;
  o.status=st;
  if(st==='Aprovado'){o.aprovadoEm=new Date().toLocaleDateString('pt-BR');
   baixaEstoque(o)}
@@ -275,7 +288,7 @@ function showLogo(){const l=(DB.emp||{}).logo;$('e-prev').innerHTML=l?`<img src=
 $('e-logo').onchange=ev=>{const f=ev.target.files[0];if(!f)return;const r=new FileReader();
  r.onload=()=>{const im=new Image();im.onload=()=>{const s=Math.min(1,400/Math.max(im.width,im.height)),w=Math.round(im.width*s),h=Math.round(im.height*s),c=document.createElement('canvas');c.width=w;c.height=h;
   const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(im,0,0,w,h);
-  DB.emp=DB.emp||{};DB.emp.logo=c.toDataURL('image/jpeg',0.85);const cd=corDom(c);if(cd)DB.emp.cor=cd;DB.emp.lw=w;DB.emp.lh=h;save();$('e-cor').value=DB.emp.cor||'#1f6feb';applyTheme(DB.emp.cor);showLogo()};im.src=r.result};r.readAsDataURL(f)};
+  DB.emp=DB.emp||{};DB.emp.logo=c.toDataURL('image/jpeg',0.85);DB.emp.lw=w;DB.emp.lh=h;save();$('e-cor').value=DB.emp.cor||'#0974d7';applyTheme(DB.emp.cor);showLogo()};im.src=r.result};r.readAsDataURL(f)};
 $('e-rm').onclick=()=>{if(DB.emp){delete DB.emp.logo;delete DB.emp.lw;delete DB.emp.lh;save()}$('e-logo').value='';showLogo()};
 showLogo();
 const R2=n=>R(n).replace(/\u00a0/g,' ');
@@ -300,21 +313,21 @@ function mkPdf(o){
  condLinhas(o).forEach(l=>{d.splitTextToSize(l,182).forEach(s=>{pg(5);d.text(s,M,y);y+=5})});
  return d}
 window.pdfOrc=async id=>{const o=DB.orc.find(x=>x.id===id);
- if(!window.jspdf)return alert('Não foi possível carregar o gerador de PDF.');
+ if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');
  const d=mkPdf(o),name='Orcamento-'+o.n+'.pdf',f=new File([d.output('blob')],name,{type:'application/pdf'});
  const msg=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${o.n} em PDF. Total: ${R(o.total)}.\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:msg});return}}catch(e){if(e.name==='AbortError')return}
  d.save(name);
  let t=dig(o.tel);if(t){if(t.length<=11)t='55'+t;window.open('https://wa.me/'+t+'?text='+encodeURIComponent(msg),'_blank')}
- else alert('PDF baixado. Cadastre o telefone do cliente para abrir o WhatsApp direto.')};
+ else toast('PDF baixado. Cadastre o telefone do cliente para abrir o WhatsApp direto.')};
 window.emailOrc=id=>{const o=DB.orc.find(x=>x.id===id),e=(DB.emp||{}).mail||'',c=DB.cli.find(x=>x.nome===o.cli);
- if(!c||!c.email)return alert('Cadastre o e-mail deste cliente na aba Clientes.');
- if(!window.jspdf)return alert('Não foi possível carregar o gerador de PDF.');
+ if(!c||!c.email)return toast('Cadastre o e-mail deste cliente na aba Clientes.');
+ if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');
  const name='Orcamento-'+o.n+'.pdf',enc=encodeURIComponent,n=o.n,emp=(DB.emp||{}).nome||'';
  const link=(a,b)=>'mailto:'+e+'?subject='+enc(a+' - Orçamento nº '+n)+'&body='+enc(b);
  const body=`Olá, ${o.contato||o.cli}!\n\nSegue em anexo o orçamento nº ${n}${o.rev?' (revisão '+o.rev+')':''}. Valor total: ${R(o.total)}.\n\nPara aprovar, rejeitar ou pedir revisão, acesse o link:\n\n${linkOrc(o)}\n\nAtenciosamente,\n${emp}`;
  mkPdf(o).save(name);
- alert('O PDF "'+name+'" foi baixado. Anexe-o ao e-mail que vai abrir no Outlook.');
+ toast('O PDF "'+name+'" foi baixado. Anexe-o ao e-mail que vai abrir no Outlook.');
  window.location.href='mailto:'+c.email+'?subject='+enc('Orçamento nº '+n+(emp?' - '+emp:''))+'&body='+enc(body)};
 const pd=s=>{const p=String(s).split('/');return new Date(p[2],p[1]-1,p[0])};
 function relData(){const t=$('r-tipo').value,m=[],pc=[];let titulo,cols,rows,tot='';
@@ -345,8 +358,8 @@ function relPdf(d){const p=new window.jspdf.jsPDF({orientation:'l'}),e=DB.emp||{
   let x=10;ls.forEach((l,i)=>{p.text(l,x,y);x+=W[i]});y+=h;p.setDrawColor(200);p.line(10,y-3,287,y-3)};
  row(d.cols,1);d.rows.forEach(r=>row(r.map((v,i)=>fv(d,v,i))));
  y+=3;p.setFont(undefined,'bold');p.text(p.splitTextToSize(d.tot,277),10,y);return p}
-$('r-pdf').onclick=()=>{if(!window.jspdf)return alert('Não foi possível carregar o gerador de PDF.');relPdf(relData()).save('relatorio-'+$('r-tipo').value+'.pdf')};
-$('r-xls').onclick=()=>{if(!window.XLSX)return alert('Não foi possível carregar o gerador de Excel.');const d=relData();
+$('r-pdf').onclick=()=>{if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');relPdf(relData()).save('relatorio-'+$('r-tipo').value+'.pdf')};
+$('r-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carregar o gerador de Excel.');const d=relData();
  const ws=XLSX.utils.aoa_to_sheet([d.cols,...d.rows]);
  d.rows.forEach((r,ri)=>{d.m.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='#,##0.00'});d.pc.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='0.0"%"'})});
  ws['!cols']=d.cols.map((c,i)=>({wch:Math.min(40,Math.max(c.length,...d.rows.map(r=>String(r[i]).length))+2)}));
@@ -365,7 +378,7 @@ function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).ge
  r.push('Garantia de serviço: '+(c.gs||'90 dias'));
  r.push('Garantia de equipamentos: '+(c.ge||'1 ano, conforme o fabricante'));
  r.push('Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+R2(o.total/(c.parc||1)):'PIX'));return r}
-window.pagar=id=>{const o=DB.orc.find(x=>x.id===id);if(!confirm('Marcar o orçamento nº '+o.n+' como pago ('+R(o.total)+')?'))return;o.pago=o.total;save();render()};
+window.pagar=async id=>{const o=DB.orc.find(x=>x.id===id);if(!await ask('Marcar como pago?','Orçamento nº '+o.n+' · '+R(o.total),'Marcar como pago'))return;o.pago=o.total;save();render()};
 function finData(){
  const de=$('f-de').value?new Date($('f-de').value+'T00:00:00'):null,ate=$('f-ate').value?new Date($('f-ate').value+'T23:59:59'):null,sit=$('f-sit').value;
  const l=DB.orc.filter(o=>o.status==='Aprovado').filter(o=>{const d=pd(o.aprovadoEm||o.data);return(!de||d>=de)&&(!ate||d<=ate)}).filter(o=>!sit||(sit==='Pago'?o.pago>=o.total:o.pago<o.total)).sort((a,b)=>a.n-b.n);
@@ -379,8 +392,8 @@ function finRender(){const d=finData();
  $('f-h').innerHTML='<tr>'+d.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr>';
  $('f-b').innerHTML=d.rows.map(r=>'<tr>'+r.map((v,i)=>'<td>'+esc(fv(d,v,i))+'</td>').join('')+'</tr>').join('')||'<tr><td class="mu">Nenhum orçamento aprovado no período.</td></tr>'}
 ['f-de','f-ate','f-sit'].forEach(i=>$(i).onchange=finRender);
-$('f-pdf').onclick=()=>{if(!window.jspdf)return alert('Não foi possível carregar o gerador de PDF.');relPdf(finData()).save('financeiro.pdf')};
-$('f-xls').onclick=()=>{if(!window.XLSX)return alert('Não foi possível carregar o gerador de Excel.');const d=finData(),ws=XLSX.utils.aoa_to_sheet([d.cols,...d.rows,[],['Faturamento',d.fat],['Custo',d.cus],['Lucro',d.luc],['Margem',d.mg],['Recebido',d.rec],['A receber',d.ab]]);
+$('f-pdf').onclick=()=>{if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');relPdf(finData()).save('financeiro.pdf')};
+$('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carregar o gerador de Excel.');const d=finData(),ws=XLSX.utils.aoa_to_sheet([d.cols,...d.rows,[],['Faturamento',d.fat],['Custo',d.cus],['Lucro',d.luc],['Margem',d.mg],['Recebido',d.rec],['A receber',d.ab]]);
  d.rows.forEach((r,ri)=>{d.m.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='#,##0.00'});d.pc.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='0.0"%"'})});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Financeiro');XLSX.writeFile(wb,'financeiro.xlsx')};
 let editId=null;
@@ -391,7 +404,7 @@ window.editOrc=id=>{const o=DB.orc.find(x=>x.id===id);editId=id;itens=o.itens.ma
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
  $('o-save').textContent='Salvar alterações (nº '+o.n+')';$('o-cancel').style.display='';renderItens();window.scrollTo(0,0)};
 window.revisao=id=>{const o=DB.orc.find(x=>x.id===id);const n=prompt('O que o cliente pediu para mudar?',o.nota||'');if(n===null)return;o.status='Em revisão';o.nota=n;save();render()};
-function render(){brand();upd();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
+function render(){brand();upd();onbRender();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
  const cur=$('o-cli').value;
  $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');$('o-cli').value=cur;
  fillItems();renderItens();
@@ -427,8 +440,9 @@ async function entrar(u){user=u;$('auth').style.display='none';
  const {data}=await db.from('dados').select('conteudo').maybeSingle();
  DB=Object.assign({cli:[],prod:[],serv:[],orc:[],seq:1,emp:{}},(data&&data.conteudo)||{});DB.emp=DB.emp||{};
  const novo=localStorage.getItem('orc-emp-novo');if(novo&&!DB.emp.nome){DB.emp.nome=novo}localStorage.removeItem('orc-emp-novo');
- ['nome','doc','tel','mail','end'].forEach(k=>$('e-'+k).value=DB.emp[k]||'');$('e-cor').value=DB.emp.cor||'#1f6feb';applyTheme(DB.emp.cor);showLogo();render();
- if(!DB.emp.nome){alert('Bem-vindo! Preencha os dados da empresa (nome, CNPJ, telefone, e-mail e logo) na aba Orçamentos.')}
+ ['nome','doc','tel','mail','end'].forEach(k=>$('e-'+k).value=DB.emp[k]||'');if(!DB.emp.tema2){DB.emp.cor='#0974d7';DB.emp.tema2=1}
+ $('e-cor').value=DB.emp.cor||'#0974d7';applyTheme(DB.emp.cor);showLogo();render();
+ if(!DB.emp.nome){toast('Bem-vindo! Preencha os dados da empresa (nome, CNPJ, telefone, e-mail e logo) na aba Orçamentos.')}
  await sync();clearInterval(poll);poll=setInterval(sync,60000)}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync()});
 const amsg=t=>{$('a-msg').textContent=t};
@@ -479,7 +493,7 @@ async function fechaPop(ir){$('pop').style.display='none';const ids=popIds;popId
  if(ids.length)await db.from('solicitacoes').update({visto:true}).in('id',ids);
  if(ir)[...document.querySelectorAll('nav button')].find(b=>b.dataset.k==='sol').click();else solRender()}
 $('pop-ok').onclick=()=>fechaPop(true);$('pop-x').onclick=()=>fechaPop(false);
-$('s-copy').onclick=()=>{$('s-link').select();try{navigator.clipboard.writeText($('s-link').value)}catch(e){document.execCommand('copy')}$('s-copy').textContent='Copiado!';setTimeout(()=>$('s-copy').textContent='Copiar',1500)};
+$('s-copy').onclick=()=>{DB.linkCopiado=true;save();onbRender();$('s-link').select();try{navigator.clipboard.writeText($('s-link').value)}catch(e){document.execCommand('copy')}$('s-copy').textContent='Copiado!';setTimeout(()=>$('s-copy').textContent='Copiar',1500)};
 function solRender(){if(!user)return;
  const nb=document.querySelector('nav button[data-k="sol"]');if(nb){const n=SOL.filter(s=>s.status==='Recebida').length;nb.innerHTML='Solicitações'+(n?'<span class="dot">'+n+'</span>':'')}
  $('s-link').value=new URL('solicitar.html',location.href).href+'?e='+user.id;
@@ -491,9 +505,9 @@ function solRender(){if(!user)return;
   <p style="white-space:pre-wrap">${esc(s.descricao)}</p>
   <div>${SSt.map(t=>`<button class="btn ${s.status===t?'':'s'}" style="margin:4px 4px 0 0" onclick="setSol('${s.id}','${t}')">${t}</button>`).join('')}</div>
   ${ag?`<div style="margin-top:10px;max-width:280px"><label>Prazo / agendamento</label><input type="datetime-local" value="${s.agendamento?toLocal(s.agendamento):''}" onchange="agSol('${s.id}',this.value)">${s.agendamento?`<a class="ed" target="_blank" rel="noopener" href="${gcal(s)}">Adicionar ao Google Agenda</a>`:''}</div>`:''}
-  <div style="margin-top:8px"><button class="ed" onclick="orcSol('${s.id}')">criar orçamento</button>${s.tel?` <a class="ed" target="_blank" rel="noopener" href="https://wa.me/${waNum(s.tel)}">WhatsApp</a>`:''}</div></div>`}).join('')||'<div class="card mu">Nenhuma solicitação ainda.</div>'}
-window.setSol=async(id,st)=>{const s=SOL.find(x=>x.id===id);const {error}=await db.from('solicitacoes').update({status:st}).eq('id',id);if(error)return alert('Não foi possível atualizar o status.');s.status=st;solRender()};
-window.agSol=async(id,v)=>{const s=SOL.find(x=>x.id===id),val=v?new Date(v).toISOString():null;const {error}=await db.from('solicitacoes').update({agendamento:val}).eq('id',id);if(error)return alert('Não foi possível salvar o prazo.');s.agendamento=val;solRender()};
+  <div style="margin-top:8px"><button class="ed" onclick="orcSol('${s.id}')">criar orçamento</button> <button class="x" onclick="delSol('${s.id}')">excluir</button>${s.tel?` <a class="ed" target="_blank" rel="noopener" href="https://wa.me/${waNum(s.tel)}">WhatsApp</a>`:''}</div></div>`}).join('')||'<div class="card mu">Nenhuma solicitação ainda.</div>'}
+window.setSol=async(id,st)=>{const s=SOL.find(x=>x.id===id);const {error}=await db.from('solicitacoes').update({status:st}).eq('id',id);if(error)return toast('Não foi possível atualizar o status.');s.status=st;solRender()};
+window.agSol=async(id,v)=>{const s=SOL.find(x=>x.id===id),val=v?new Date(v).toISOString():null;const {error}=await db.from('solicitacoes').update({agendamento:val}).eq('id',id);if(error)return toast('Não foi possível salvar o prazo.');s.agendamento=val;solRender()};
 window.orcSol=id=>{const s=SOL.find(x=>x.id===id),d=dig(s.doc),c=DB.cli.find(x=>(d&&dig(x.doc)===d)||x.nome===s.nome);
  document.querySelector('nav button').click();cancelEdit();if(c)$('o-cli').value=c.id;$('o-desc').value=s.descricao||'';window.scrollTo(0,0)};
 function hex2hsl(hex){const m=/^#?([0-9a-f]{6})$/i.exec(hex||'');if(!m)return null;const n=parseInt(m[1],16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;let h=0,s=0;if(d){s=d/(1-Math.abs(2*l-1));h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h=Math.round(h*60);if(h<0)h+=360}return{h,s:Math.round(s*100)}}
@@ -509,5 +523,31 @@ function corDom(c){const x=c.getContext('2d').getImageData(0,0,c.width,c.height)
  return best?'#'+[best.r,best.g,best.b].map(v=>Math.round(v/best.c).toString(16).padStart(2,'0')).join(''):''}
 $('e-cor').oninput=ev=>{DB.emp=DB.emp||{};DB.emp.cor=ev.target.value;applyTheme(ev.target.value);save()};
 try{applyTheme(localStorage.getItem('orc-tema'))}catch(e){}
+// ===== Avisos, diálogos, busca e primeiros passos =====
+function toast(m,t){let c=$('toasts');if(!c){c=document.createElement('div');c.id='toasts';document.body.appendChild(c)}
+ const e=document.createElement('div');e.className='toast '+(t||'');e.textContent=m;c.appendChild(e);setTimeout(()=>{e.style.opacity=0;setTimeout(()=>e.remove(),300)},m.length>80?6500:3500)}
+function dlgShow(html,btns){return new Promise(res=>{const d=document.createElement('div');d.className='ov';d.innerHTML='<div class="card dg">'+html+'<div class="dgb"></div></div>';
+ const bx=d.querySelector('.dgb');btns.forEach(([t,cls,v])=>{const b=document.createElement('button');b.className='btn '+cls;b.textContent=t;b.onclick=()=>{d.remove();res(v)};bx.appendChild(b)});
+ d.onclick=e=>{if(e.target===d){d.remove();res(false)}};document.body.appendChild(d);bx.lastChild.focus()})}
+const ask=(t,txt,ok,perigo)=>dlgShow('<h2>'+esc(t)+'</h2><p class="mu" style="font-size:14px">'+esc(txt||'')+'</p>',[['Cancelar','s',false],[ok||'Confirmar',perigo?'dgr':'',true]]);
+const info=(t,html)=>dlgShow('<h2>'+esc(t)+'</h2>'+html,[['Fechar','',true]]);
+window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id),cu=custoOrc(o),lu=o.total-cu;
+ info('Orçamento nº '+o.n+(o.rev?' (rev. '+o.rev+')':''),
+  `<div class="mu">${esc(o.data)} · ${esc(o.cli)} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
+  `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
+  `</tbody></table><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
+window.delSol=async id=>{const s=SOL.find(x=>x.id===id);
+ if(!await ask('Excluir a solicitação #'+s.protocolo+'?','O cliente cadastrado a partir dela continua na aba Clientes.','Excluir',true))return;
+ const {error}=await db.from('solicitacoes').delete().eq('id',id);if(error)return toast('Não foi possível excluir: '+error.message,'err');
+ SOL=SOL.filter(x=>x.id!==id);solRender();toast('Solicitação excluída.','ok')};
+function applyQ(){document.querySelectorAll('input.q').forEach(i=>{const q=i.value.trim().toLowerCase();document.querySelectorAll(i.dataset.t).forEach(el=>{el.style.display=!q||el.textContent.toLowerCase().includes(q)?'':'none'})})}
+document.addEventListener('input',e=>{if(e.target.classList&&e.target.classList.contains('q'))applyQ()});
+let rq=0;new MutationObserver(()=>{cancelAnimationFrame(rq);rq=requestAnimationFrame(applyQ)}).observe(document.querySelector('main'),{childList:true,subtree:true});
+function onbRender(){const el=$('onb');if(!el)return;if(DB.onbOff){el.innerHTML='';return}
+ const e=DB.emp||{},P=[['Preencher os dados da empresa e enviar a logo',!!(e.nome&&e.tel&&e.logo),'orc','e-nome'],['Cadastrar um produto ou um serviço',DB.prod.length+DB.serv.length>0,'prod'],['Cadastrar um cliente',DB.cli.length>0,'cli'],['Criar o primeiro orçamento',DB.orc.length>0,'orc'],['Copiar o link de solicitações para seus clientes',!!DB.linkCopiado,'sol']],n=P.filter(p=>p[1]).length;
+ if(n===P.length){el.innerHTML='';return}
+ el.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">Primeiros passos · ${n} de ${P.length}</h2><button class="x" onclick="onbOff()">dispensar</button></div><div class="pb"><i style="width:${n/P.length*100}%"></i></div>`+P.map((p,i)=>`<div class="st-i ${p[1]?'done':''}" onclick="onbGo('${p[2]}','${p[3]||''}')"><span class="ck">${p[1]?'✓':i+1}</span>${esc(p[0])}</div>`).join('')+'</div>'}
+window.onbOff=()=>{DB.onbOff=true;save();onbRender()};
+window.onbGo=(k,f)=>{[...document.querySelectorAll('nav button')].find(b=>b.dataset.k===k).click();if(f)setTimeout(()=>{const x=$(f);if(x){x.scrollIntoView({behavior:'smooth',block:'center'});x.focus()}},60)};
 boot0();
 </script></body></html>

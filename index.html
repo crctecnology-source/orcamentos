@@ -90,9 +90,10 @@ tbody tr:hover{background:var(--ac2)}
 <div><label>Tipo</label><select id="i-kind"><option value="s">Serviço</option><option value="p">Produto</option></select></div>
 <div class="w2"><label>Equipamento / serviço</label><select id="i-item"></select></div>
 <div><label>Quantidade</label><input id="i-qtd" type="number" min="1" step="any" value="1"></div>
+<div><label>Valor unitário (R$)</label><input id="i-val" type="number" min="0" step="0.01" placeholder="do cadastro"></div>
 </div>
 <button class="btn s" id="i-add">+ Adicionar item</button>
-<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div>
+<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade e o valor de cada item direto na lista.</div>
 <div class="tot">Total: <span id="o-total">R$ 0,00</span></div>
 <div id="o-res" class="mu" style="text-align:right"></div>
 <h2 style="margin-top:14px">Condições da proposta</h2>
@@ -145,7 +146,7 @@ tbody tr:hover{background:var(--ac2)}
 <div><label>Quantidade em estoque</label><input id="p-qtd" type="number" step="any" min="0"></div>
 <div><label>Estoque mínimo</label><input id="p-min" type="number" step="any" min="0"></div>
 </div>
-<div class="mu">Preencha a % de lucro para calcular a venda, ou a venda para calcular a %.</div>
+<div class="mu">Preencha a % de lucro para calcular a venda, ou a venda para calcular a %. Deixe o valor de venda em branco para definir o preço em cada orçamento.</div>
 <div id="p-res" style="margin-top:6px"></div>
 <button class="btn" id="p-save">Salvar produto</button>
 </div>
@@ -162,6 +163,7 @@ tbody tr:hover{background:var(--ac2)}
 <div><label>Lucro (%)</label><input id="v-pct" type="number" step="0.01"></div>
 <div><label>Valor final (R$)</label><input id="v-final" type="number" step="0.01" min="0"></div>
 </div>
+<div class="mu">Deixe o valor final em branco para definir o preço em cada orçamento.</div>
 <div id="v-res" style="margin-top:8px"></div>
 <button class="btn" id="v-save">Salvar serviço</button>
 </div>
@@ -216,7 +218,7 @@ $('p-compra').oninput=()=>{if($('p-pct').value)$('p-pct').oninput();else if($('p
 $('v-pct').oninput=()=>{$('v-final').value=(num('v-custo')*(1+num('v-pct')/100)).toFixed(2)};
 $('v-final').oninput=()=>{const c=num('v-custo');$('v-pct').value=c?((num('v-final')/c-1)*100).toFixed(2):''};
 $('v-custo').oninput=()=>{if($('v-pct').value)$('v-pct').oninput();else if($('v-final').value)$('v-final').oninput()};
-function upd(){$('p-res').innerHTML=num('p-compra')||num('p-venda')?tag(num('p-compra'),num('p-venda')):'';$('v-res').innerHTML=num('v-custo')||num('v-final')?tag(num('v-custo'),num('v-final')):''}
+function upd(){$('p-res').innerHTML=num('p-venda')?tag(num('p-compra'),num('p-venda')):'';$('v-res').innerHTML=num('v-final')?tag(num('v-custo'),num('v-final')):''}
 document.addEventListener('input',upd);
 // CEP
 $('c-cep').oninput=e=>{let v=e.target.value.replace(/\D/g,'').slice(0,8);e.target.value=v.length>5?v.slice(0,5)+'-'+v.slice(5):v;
@@ -251,18 +253,26 @@ window.edit=(l,id)=>{const o=DB[l].find(x=>x.id===id);
  if(l==='prod')$('p-venda').oninput();if(l==='serv')$('v-final').oninput();upd();window.scrollTo(0,0)};
 window.del=async(l,id)=>{if(await ask('Excluir este registro?','Esta ação não pode ser desfeita.','Excluir',true)){DB[l]=DB[l].filter(x=>x.id!==id);if(l==='orc'&&sb)db.from('orcamentos').delete().eq('id',id).then(()=>{});save();render()}};
 const acts=(l,id)=>`<button class="ed" onclick="edit('${l}','${id}')">editar</button> <button class="x" onclick="del('${l}','${id}')">excluir</button>`;
-const pct=(c,v)=>c?((v/c-1)*100).toFixed(1)+'%':'—';
+const pct=(c,v)=>c&&v?((v/c-1)*100).toFixed(1)+'%':'—';
 const tag=(c,v)=>{const l=v-c;return `<span class="${l<0?'low':l>0?'ok':'mu'}">${l>0?'Lucro':l<0?'Prejuízo':'Sem lucro'} ${R(Math.abs(l))} · margem ${v?(l/v*100).toFixed(1)+'%':'—'}</span>`};
 
 // orçamento
 function fillItems(){const k=$('i-kind').value;
- $('i-item').innerHTML=(k==='s'?DB.serv.map(s=>`<option value="${s.id}">${esc(s.cod?s.cod+' · ':'')}${esc(s.tipo)} — ${R(s.final)}</option>`)
-  :DB.prod.map(p=>`<option value="${p.id}">${esc(p.cod?p.cod+' · ':'')}${esc(p.desc)} — ${R(p.venda)}</option>`)).join('')||'<option value="">Nenhum cadastrado</option>'}
+ $('i-item').innerHTML=(k==='s'?DB.serv.map(s=>`<option value="${s.id}">${esc(s.cod?s.cod+' · ':'')}${esc(s.tipo)} — ${s.final?R(s.final):'valor a definir'}</option>`)
+  :DB.prod.map(p=>`<option value="${p.id}">${esc(p.cod?p.cod+' · ':'')}${esc(p.desc)} — ${p.venda?R(p.venda):'valor a definir'}</option>`)).join('')||'<option value="">Nenhum cadastrado</option>';prefill()}
 $('i-kind').onchange=fillItems;
 $('i-add').onclick=()=>{const k=$('i-kind').value,id=$('i-item').value,q=num('i-qtd');if(!id||q<=0)return;
- const o=DB[k==='s'?'serv':'prod'].find(x=>x.id===id);
- itens.push({k,id,nome:k==='s'?o.tipo:o.desc,q,u:k==='s'?o.final:o.venda,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;renderItens()};
-function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.u)}</td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum item adicionado.</td></tr>';
+ const o=DB[k==='s'?'serv':'prod'].find(x=>x.id===id),reg=(k==='s'?o.final:o.venda)||0,txt=$('i-val').value.trim(),u=txt===''?reg:parseFloat(txt);
+ if(txt===''&&!reg)return toast('Este item está sem valor no cadastro. Informe o valor unitário.');
+ if(!(u>=0))return toast('Valor inválido.');
+ itens.push({k,id,nome:k==='s'?o.tipo:o.desc,q,u,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;prefill();renderItens()};
+function precoReg(){const k=$('i-kind').value,o=DB[k==='s'?'serv':'prod'].find(x=>x.id===$('i-item').value);return o?(k==='s'?o.final:o.venda)||0:0}
+function prefill(){const p=precoReg();$('i-val').value=p||'';$('i-val').placeholder=p?'':'informe o valor'}
+$('i-item').onchange=prefill;
+window.edItem=(n,f,v)=>{const i=itens[n];
+ if(f==='nome'){i.nome=v.trim()||i.nome}else{const x=parseFloat(v);if(!(x>=0)||(f==='q'&&x<=0))toast(f==='q'?'Quantidade inválida.':'Valor inválido.');else i[f]=x}
+ renderItens()};
+function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum item adicionado.</td></tr>';
  const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
 $('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
@@ -409,8 +419,8 @@ function render(){brand();upd();onbRender();relRender();solRender();finRender();
  $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');$('o-cli').value=cur;
  fillItems();renderItens();
  $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
- $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${tag(p.compra,p.venda)}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhum produto.</td></tr>';
- $('v-list').innerHTML=DB.serv.map(s=>`<tr><td>${esc(s.cod)}</td><td>${esc(s.tipo)}</td><td>${R(s.custo)}</td><td>${R(s.final)}</td><td>${pct(s.custo,s.final)}</td><td>${tag(s.custo,s.final)}</td><td>${acts('serv',s.id)}</td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum serviço.</td></tr>';
+ $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${p.venda?tag(p.compra,p.venda):'<span class="mu">valor a definir</span>'}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhum produto.</td></tr>';
+ $('v-list').innerHTML=DB.serv.map(s=>`<tr><td>${esc(s.cod)}</td><td>${esc(s.tipo)}</td><td>${R(s.custo)}</td><td>${R(s.final)}</td><td>${pct(s.custo,s.final)}</td><td>${s.final?tag(s.custo,s.final):'<span class="mu">valor a definir</span>'}</td><td>${acts('serv',s.id)}</td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum serviço.</td></tr>';
  $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${o.n}</td><td>${o.data}</td><td>${esc(o.cli)}</td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> ${o.status==='Pendente'||o.status==='Em revisão'?`<button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
 }
 // ===== Supabase: login, nuvem e aprovação pelo cliente =====

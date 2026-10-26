@@ -583,6 +583,7 @@ function osMsg(o){const e=DB.emp||{},c=DB.cli.find(x=>x.id===o.cliId)||{},L=[];
  L.push('Equipamento: '+o.equip);if(o.marca)L.push('Marca: '+o.marca);if(o.modelo)L.push('Modelo: '+o.modelo);if(o.serie)L.push('Nº de série: '+o.serie);if(o.osTerc)L.push('Nº O.S. terceiros: '+o.osTerc);
  L.push('Defeito apresentado: '+o.defeito,'','Status: '+o.status);
  if(o.constatado)L.push('Defeito constatado: '+o.constatado);if(o.valor)L.push('Valor: '+R(o.valor));
+ if(o.pag)L.push('Forma de pagamento: '+(o.pag==='Cartão'?'Cartão em '+(o.parc||1)+'x'+(o.valor?' de '+R(o.valor/(o.parc||1)):''):'PIX'));if(o.recebido)L.push('Pagamento recebido. Obrigado!');
  if(e.nome)L.push('','— '+e.nome);return L.join('\n')}
 function osZap(o){const c=DB.cli.find(x=>x.id===o.cliId)||{};if(!dig(c.tel))return toast('Este cliente está sem telefone. Cadastre o telefone na aba Clientes.');
  window.open('https://wa.me/'+waNum(c.tel)+'?text='+encodeURIComponent(osMsg(o)),'_blank')}
@@ -599,7 +600,7 @@ window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);osEditId=id;
  $('os-cli').value=o.cliId;$('os-eq').value=o.equip;$('os-marca').value=o.marca||'';$('os-modelo').value=o.modelo||'';$('os-serie').value=o.serie||'';$('os-terc').value=o.osTerc||'';$('os-def').value=o.defeito||'';
  $('os-save').textContent='Salvar alterações';$('os-cancel').style.display='';$('os-h').textContent='Editar OS nº '+osNum(o.n);osRender();window.scrollTo(0,0)};
 window.osSt=(id,st)=>{const o=DB.os.find(x=>x.id===id);o.status=st;save();osRender();toast('Status: '+st,'ok')};
-window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=f==='valor'?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
+window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=(f==='valor'||f==='parc')?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
 window.osZapId=id=>osZap(DB.os.find(x=>x.id===id));
 window.osDel=async id=>{const o=DB.os.find(x=>x.id===id);if(!await ask('Excluir a OS nº '+osNum(o.n)+'?','Esta ação não pode ser desfeita.','Excluir',true))return;
  DB.os=DB.os.filter(x=>x.id!==id);if(osEditId===id)osLimpa();save();render();toast('OS excluída.','ok')};
@@ -615,6 +616,12 @@ function osRender(){DB.os=DB.os||[];const cur=$('os-cli').value;
   <div style="margin-top:6px;white-space:pre-wrap"><span class="mu">Defeito apresentado:</span> ${esc(o.defeito)}</div>
   <div style="margin-top:10px;max-width:260px"><label>Status</label><select onchange="osSt('${o.id}',this.value)">${OSST.map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('')}</select></div>
   ${mais?`<div class="g" style="margin-top:10px"><div class="w2"><label>Defeito constatado</label><textarea onchange="osF('${o.id}','constatado',this.value)">${esc(o.constatado||'')}</textarea></div><div><label>Valor (R$)</label><input type="number" min="0" step="0.01" value="${o.valor||''}" onchange="osF('${o.id}','valor',this.value)"></div></div>`:''}
-  <div style="margin-top:8px"><button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
+  ${pagHtml(o)}<div style="margin-top:8px"><button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
+function pagHtml(o){if(o.status!=='Aprovada'&&o.status!=='Baixada')return'';
+ return `<div class="g" style="margin-top:10px"><div><label>Forma de pagamento</label><select onchange="osPag('${o.id}',this.value)"><option value="">Selecione…</option><option${o.pag==='PIX'?' selected':''}>PIX</option><option${o.pag==='Cartão'?' selected':''}>Cartão</option></select></div>`
+ +(o.pag==='Cartão'?`<div><label>Parcelas</label><select onchange="osF('${o.id}','parc',this.value)">${[...Array(12)].map((_,i)=>`<option value="${i+1}"${(o.parc||1)===i+1?' selected':''}>${i+1}x${o.valor?' de '+R(o.valor/(i+1)):''}</option>`).join('')}</select></div>`:'')
+ +`<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" style="width:20px;min-height:20px;height:20px" ${o.recebido?'checked':''} onchange="osRec('${o.id}',this.checked)">Recebido${o.recebido&&o.recebidoEm?' em '+esc(o.recebidoEm):''}</label></div></div>`}
+window.osPag=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pag=v;if(v==='Cartão'&&!o.parc)o.parc=1;save();osRender();toast('Forma de pagamento: '+(v||'não informada'),'ok')};
+window.osRec=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebido=ch;o.recebidoEm=ch?new Date().toLocaleDateString('pt-BR'):'';save();osRender();toast(ch?'Pagamento registrado como recebido.':'Recebimento desmarcado.','ok')};
 boot0();
 </script></body></html>

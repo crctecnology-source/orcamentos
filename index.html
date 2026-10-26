@@ -53,6 +53,8 @@ tbody tr:hover{background:var(--ac2)}
 .mu{color:var(--mu);font-size:13px}
 .bd{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700;background:var(--ac2);color:var(--ac)}
 .bd.ok2{background:rgba(98,179,18,.18);color:var(--okc)}.bd.no{background:rgba(215,25,32,.13);color:var(--dg)}.bd.rev{background:rgba(217,119,6,.16);color:#b45309}
+.bd.cz{background:rgba(120,130,150,.2);color:var(--mu)}
+.os{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-top:10px}
 .dot{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#e11d25;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:5px}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;width:calc(100% - 24px);max-width:440px;pointer-events:none}
 .toast{background:#071428;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;box-shadow:0 6px 22px rgba(0,0,0,.3);transition:opacity .3s;border-left:4px solid var(--ac)}
@@ -169,6 +171,19 @@ tbody tr:hover{background:var(--ac2)}
 </div>
 <div class="card"><input class="q" data-t="#v-list tr" placeholder="Buscar serviço…"><div class="tw"><table><thead><tr><th>Código</th><th>Tipo</th><th>Custo</th><th>Valor final</th><th>% sobre custo</th><th>Resultado</th><th></th></tr></thead><tbody id="v-list"></tbody></table></div></div>
 </section>
+<section id="s-os"><div class="card"><h2 id="os-h">Nova ordem de serviço</h2>
+<div class="mu" id="os-num" style="margin:-6px 0 12px"></div>
+<div class="g">
+<div class="w2"><label>Cliente</label><select id="os-cli"></select></div>
+<div><label>Equipamento</label><input id="os-eq"></div>
+<div><label>Marca</label><input id="os-marca"></div>
+<div><label>Modelo</label><input id="os-modelo"></div>
+<div><label>Nº de série</label><input id="os-serie"></div>
+<div><label>Nº O.S. terceiros</label><input id="os-terc"></div>
+</div>
+<div style="margin-top:12px"><label>Defeito apresentado</label><textarea id="os-def"></textarea></div>
+<button class="btn" id="os-save">Salvar e enviar por WhatsApp</button><button class="btn s" id="os-cancel" style="display:none;margin-left:8px">Cancelar edição</button></div>
+<div class="card"><h2>Ordens de serviço</h2><input class="q" data-t="#os-list>.os" placeholder="Buscar por número, cliente, equipamento, série ou status…"><div id="os-list"></div></div></section>
 <section id="s-sol"><div class="card"><h2>Link para seus clientes</h2><div class="mu">Envie este link ou coloque no seu site. Qualquer pessoa pode fazer uma solicitação, sem login.</div><div style="display:flex;gap:8px;margin-top:8px"><input id="s-link" readonly><button class="btn s" id="s-copy" style="margin:0">Copiar</button></div></div>
 <input class="q" data-t="#s-list>.card" placeholder="Buscar solicitação por cliente, tipo ou texto…" style="margin-bottom:12px"><div id="s-list"></div></section>
 <section id="s-fin"><div class="card"><h2>Finanças</h2><div class="mu">Considera os orçamentos aprovados.</div><div class="g" style="margin-top:8px">
@@ -203,7 +218,7 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 let itens=[];
 
 // abas
-[['orc','Orçamentos'],['cli','Clientes'],['prod','Produtos'],['serv','Serviços'],['sol','Solicitações'],['fin','Finanças'],['rel','Relatórios']].forEach(([k,t],i)=>{
+[['orc','Orçamentos'],['os','Ordem de Serviço'],['cli','Clientes'],['prod','Produtos'],['serv','Serviços'],['sol','Solicitações'],['fin','Finanças'],['rel','Relatórios']].forEach(([k,t],i)=>{
  const b=document.createElement('button');b.textContent=t;b.dataset.k=k;if(!i)b.className='on';
  b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='s-'+k));render()};
@@ -414,7 +429,7 @@ window.editOrc=id=>{const o=DB.orc.find(x=>x.id===id);editId=id;itens=o.itens.ma
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
  $('o-save').textContent='Salvar alterações (nº '+o.n+')';$('o-cancel').style.display='';renderItens();window.scrollTo(0,0)};
 window.revisao=id=>{const o=DB.orc.find(x=>x.id===id);const n=prompt('O que o cliente pediu para mudar?',o.nota||'');if(n===null)return;o.status='Em revisão';o.nota=n;save();render()};
-function render(){brand();upd();onbRender();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
+function render(){brand();upd();onbRender();osRender();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
  const cur=$('o-cli').value;
  $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');$('o-cli').value=cur;
  fillItems();renderItens();
@@ -448,7 +463,7 @@ async function sync(){if(!user)return;setSync('salvando…');
  try{if(await pull())render();await pullSol();await push();setSync('salvo ✓')}catch(e){setSync('erro ao salvar: '+((e&&(e.message||e.code))||''));console.error(e)}}
 async function entrar(u){user=u;$('auth').style.display='none';
  const {data}=await db.from('dados').select('conteudo').maybeSingle();
- DB=Object.assign({cli:[],prod:[],serv:[],orc:[],seq:1,emp:{}},(data&&data.conteudo)||{});DB.emp=DB.emp||{};
+ DB=Object.assign({cli:[],prod:[],serv:[],orc:[],os:[],osSeq:1,seq:1,emp:{}},(data&&data.conteudo)||{});DB.emp=DB.emp||{};
  const novo=localStorage.getItem('orc-emp-novo');if(novo&&!DB.emp.nome){DB.emp.nome=novo}localStorage.removeItem('orc-emp-novo');
  ['nome','doc','tel','mail','end'].forEach(k=>$('e-'+k).value=DB.emp[k]||'');if(!DB.emp.tema2){DB.emp.cor='#0974d7';DB.emp.tema2=1}
  $('e-cor').value=DB.emp.cor||'#0974d7';applyTheme(DB.emp.cor);showLogo();render();
@@ -559,5 +574,47 @@ function onbRender(){const el=$('onb');if(!el)return;if(DB.onbOff){el.innerHTML=
  el.innerHTML=`<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="margin:0">Primeiros passos · ${n} de ${P.length}</h2><button class="x" onclick="onbOff()">dispensar</button></div><div class="pb"><i style="width:${n/P.length*100}%"></i></div>`+P.map((p,i)=>`<div class="st-i ${p[1]?'done':''}" onclick="onbGo('${p[2]}','${p[3]||''}')"><span class="ck">${p[1]?'✓':i+1}</span>${esc(p[0])}</div>`).join('')+'</div>'}
 window.onbOff=()=>{DB.onbOff=true;save();onbRender()};
 window.onbGo=(k,f)=>{[...document.querySelectorAll('nav button')].find(b=>b.dataset.k===k).click();if(f)setTimeout(()=>{const x=$(f);if(x){x.scrollIntoView({behavior:'smooth',block:'center'});x.focus()}},60)};
+// ===== Ordem de Serviço =====
+const OSST=['Aberta','Ass. Técnica','Aprovada','Baixada'],osCls={'Aberta':'','Ass. Técnica':'rev','Aprovada':'ok2','Baixada':'cz'};
+let osEditId=null;
+const osNum=n=>String(n).padStart(4,'0');
+function osMsg(o){const e=DB.emp||{},c=DB.cli.find(x=>x.id===o.cliId)||{},L=[];
+ L.push('Olá, '+(c.contato||o.cli)+'!','Registramos a ordem de serviço nº '+osNum(o.n)+' ('+o.data+').','');
+ L.push('Equipamento: '+o.equip);if(o.marca)L.push('Marca: '+o.marca);if(o.modelo)L.push('Modelo: '+o.modelo);if(o.serie)L.push('Nº de série: '+o.serie);if(o.osTerc)L.push('Nº O.S. terceiros: '+o.osTerc);
+ L.push('Defeito apresentado: '+o.defeito,'','Status: '+o.status);
+ if(o.constatado)L.push('Defeito constatado: '+o.constatado);if(o.valor)L.push('Valor: '+R(o.valor));
+ if(e.nome)L.push('','— '+e.nome);return L.join('\n')}
+function osZap(o){const c=DB.cli.find(x=>x.id===o.cliId)||{};if(!dig(c.tel))return toast('Este cliente está sem telefone. Cadastre o telefone na aba Clientes.');
+ window.open('https://wa.me/'+waNum(c.tel)+'?text='+encodeURIComponent(osMsg(o)),'_blank')}
+function osLimpa(){osEditId=null;['os-id','os-eq','os-marca','os-modelo','os-serie','os-terc','os-def'].forEach(i=>$(i).value='');$('os-cli').value='';
+ $('os-save').textContent='Salvar e enviar por WhatsApp';$('os-cancel').style.display='none';$('os-h').textContent='Nova ordem de serviço'}
+$('os-cancel').onclick=()=>{osLimpa();osRender()};
+$('os-save').onclick=()=>{const cid=$('os-cli').value,eq=$('os-eq').value.trim(),df=$('os-def').value.trim();
+ if(!cid)return toast('Escolha o cliente.');if(!eq)return toast('Informe o equipamento.');if(!df)return toast('Informe o defeito apresentado.');
+ const c=DB.cli.find(x=>x.id===cid),d={cliId:cid,cli:c.nome,equip:eq,marca:$('os-marca').value.trim(),modelo:$('os-modelo').value.trim(),serie:$('os-serie').value.trim(),osTerc:$('os-terc').value.trim(),defeito:df};
+ if(osEditId){const o=DB.os.find(x=>x.id===osEditId);Object.assign(o,d);save();osLimpa();render();toast('OS salva. Use o botão WhatsApp para reenviar ao cliente.','ok');return}
+ DB.os=DB.os||[];const o=Object.assign({id:uid(),n:DB.osSeq||1,data:new Date().toLocaleDateString('pt-BR'),status:'Aberta',valor:0,constatado:''},d);
+ DB.osSeq=o.n+1;DB.os.push(o);save();osLimpa();render();toast('OS nº '+osNum(o.n)+' criada.','ok');osZap(o)};
+window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);osEditId=id;
+ $('os-cli').value=o.cliId;$('os-eq').value=o.equip;$('os-marca').value=o.marca||'';$('os-modelo').value=o.modelo||'';$('os-serie').value=o.serie||'';$('os-terc').value=o.osTerc||'';$('os-def').value=o.defeito||'';
+ $('os-save').textContent='Salvar alterações';$('os-cancel').style.display='';$('os-h').textContent='Editar OS nº '+osNum(o.n);osRender();window.scrollTo(0,0)};
+window.osSt=(id,st)=>{const o=DB.os.find(x=>x.id===id);o.status=st;save();osRender();toast('Status: '+st,'ok')};
+window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=f==='valor'?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
+window.osZapId=id=>osZap(DB.os.find(x=>x.id===id));
+window.osDel=async id=>{const o=DB.os.find(x=>x.id===id);if(!await ask('Excluir a OS nº '+osNum(o.n)+'?','Esta ação não pode ser desfeita.','Excluir',true))return;
+ DB.os=DB.os.filter(x=>x.id!==id);if(osEditId===id)osLimpa();save();render();toast('OS excluída.','ok')};
+function osRender(){DB.os=DB.os||[];const cur=$('os-cli').value;
+ $('os-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.contato?' — '+esc(c.contato):''}</option>`).join('');$('os-cli').value=cur;
+ const eo=osEditId&&DB.os.find(x=>x.id===osEditId);
+ $('os-num').textContent=eo?'OS nº '+osNum(eo.n):'Número desta OS: '+osNum(DB.osSeq||1)+' (gerado automaticamente)';
+ $('os-list').innerHTML=DB.os.slice().sort((a,b)=>b.n-a.n).map(o=>{const c=DB.cli.find(x=>x.id===o.cliId),mais=o.status!=='Aberta';
+  return `<div class="os"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>OS nº ${osNum(o.n)}</b><span><span class="bd ${osCls[o.status]||''}">${esc(o.status)}</span> <span class="mu">${esc(o.data)}</span></span></div>
+  <div style="margin-top:4px"><b>${esc(o.cli)}</b>${c&&c.tel?` <span class="mu">· ${esc(c.tel)}</span>`:''}</div>
+  <div>${esc([o.equip,o.marca,o.modelo].filter(Boolean).join(' · '))}</div>
+  <div class="mu">${esc([o.serie&&'Série: '+o.serie,o.osTerc&&'O.S. terceiros: '+o.osTerc].filter(Boolean).join(' · '))}</div>
+  <div style="margin-top:6px;white-space:pre-wrap"><span class="mu">Defeito apresentado:</span> ${esc(o.defeito)}</div>
+  <div style="margin-top:10px;max-width:260px"><label>Status</label><select onchange="osSt('${o.id}',this.value)">${OSST.map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('')}</select></div>
+  ${mais?`<div class="g" style="margin-top:10px"><div class="w2"><label>Defeito constatado</label><textarea onchange="osF('${o.id}','constatado',this.value)">${esc(o.constatado||'')}</textarea></div><div><label>Valor (R$)</label><input type="number" min="0" step="0.01" value="${o.valor||''}" onchange="osF('${o.id}','valor',this.value)"></div></div>`:''}
+  <div style="margin-top:8px"><button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
 boot0();
 </script></body></html>

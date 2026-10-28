@@ -60,6 +60,7 @@ tbody tr:hover{background:var(--ac2)}
 .bd.ok2{background:rgba(98,179,18,.18);color:var(--okc)}.bd.no{background:rgba(215,25,32,.13);color:var(--dg)}.bd.rev{background:rgba(217,119,6,.16);color:#b45309}
 .bd.cz{background:rgba(120,130,150,.2);color:var(--mu)}
 .os{border:1px solid var(--bd);border-radius:12px;padding:12px;margin-top:10px}
+.pg{margin-top:12px;padding:10px 12px;border:1px dashed var(--bd);border-radius:12px}
 .dot{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#e11d25;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:5px}
 #toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:120;display:flex;flex-direction:column;gap:8px;align-items:center;width:calc(100% - 24px);max-width:440px;pointer-events:none}
 .toast{background:#071428;color:#fff;padding:11px 16px;border-radius:12px;font-size:14px;box-shadow:0 6px 22px rgba(0,0,0,.3);transition:opacity .3s;border-left:4px solid var(--ac)}
@@ -597,7 +598,8 @@ function osMsg(o){const e=DB.emp||{},c=DB.cli.find(x=>x.id===o.cliId)||{},L=[];
  L.push('Equipamento: '+o.equip);if(o.marca)L.push('Marca: '+o.marca);if(o.modelo)L.push('Modelo: '+o.modelo);if(o.serie)L.push('Nº de série: '+o.serie);if(o.osTerc)L.push('Nº O.S. terceiros: '+o.osTerc);
  L.push('Defeito apresentado: '+o.defeito,'','Status: '+o.status);
  if(o.constatado)L.push('Defeito constatado: '+o.constatado);if(o.valor)L.push('Valor: '+R(o.valor));
- if(o.pag)L.push('Forma de pagamento: '+(o.pag==='Cartão'?'Cartão em '+(o.parc||1)+'x'+(o.valor?' de '+R(o.valor/(o.parc||1)):''):'PIX'));if(o.recebido)L.push('Pagamento recebido. Obrigado!');
+ if(o.pag)L.push('Pagamento mão de obra: '+(o.pag==='Cartão'?'Cartão em '+(o.parc||1)+'x':'PIX')+(o.recebido?' (recebido)':''));
+ if(o.pagEq)L.push('Pagamento equipamentos: '+(o.pagEq==='Cartão'?'Cartão em '+(o.parcEq||1)+'x':o.pagEq==='Boleto'?'Boleto'+(o.boleto?' '+o.boleto+' dias':''):'À vista')+(o.recebidoEq?' (recebido)':''));
  if(e.nome)L.push('','— '+e.nome);return L.join('\n')}
 function osZap(o){const c=DB.cli.find(x=>x.id===o.cliId)||{};if(!dig(c.tel))return toast('Este cliente está sem telefone. Cadastre o telefone na aba Clientes.');
  window.open('https://wa.me/'+waNum(c.tel)+'?text='+encodeURIComponent(osMsg(o)),'_blank')}
@@ -614,7 +616,7 @@ window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);osEditId=id;
  $('os-cli').value=o.cliId;$('os-eq').value=o.equip;$('os-marca').value=o.marca||'';$('os-modelo').value=o.modelo||'';$('os-serie').value=o.serie||'';$('os-terc').value=o.osTerc||'';$('os-def').value=o.defeito||'';
  $('os-save').textContent='Salvar alterações';$('os-cancel').style.display='';$('os-h').textContent='Editar OS nº '+osNum(o.n);osRender();window.scrollTo(0,0)};
 window.osSt=(id,st)=>{const o=DB.os.find(x=>x.id===id);o.status=st;save();osRender();toast('Status: '+st,'ok')};
-window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=(f==='valor'||f==='parc')?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
+window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=(f==='valor'||f==='parc'||f==='parcEq')?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
 window.osZapId=id=>osZap(DB.os.find(x=>x.id===id));
 window.osDel=async id=>{const o=DB.os.find(x=>x.id===id);if(!await ask('Excluir a OS nº '+osNum(o.n)+'?','Esta ação não pode ser desfeita.','Excluir',true))return;
  DB.os=DB.os.filter(x=>x.id!==id);if(osEditId===id)osLimpa();save();render();toast('OS excluída.','ok')};
@@ -632,10 +634,22 @@ function osRender(){DB.os=DB.os||[];const cur=$('os-cli').value;
   ${mais?`<div class="g" style="margin-top:10px"><div class="w2"><label>Defeito constatado</label><textarea onchange="osF('${o.id}','constatado',this.value)">${esc(o.constatado||'')}</textarea></div><div><label>Valor (R$)</label><input type="number" min="0" step="0.01" value="${o.valor||''}" onchange="osF('${o.id}','valor',this.value)"></div></div>`:''}
   ${pagHtml(o)}<div style="margin-top:8px"><button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
 function pagHtml(o){if(o.status!=='Aprovada'&&o.status!=='Baixada')return'';
- return `<div class="g" style="margin-top:10px"><div><label>Forma de pagamento</label><select onchange="osPag('${o.id}',this.value)"><option value="">Selecione…</option><option${o.pag==='PIX'?' selected':''}>PIX</option><option${o.pag==='Cartão'?' selected':''}>Cartão</option></select></div>`
- +(o.pag==='Cartão'?`<div><label>Parcelas</label><select onchange="osF('${o.id}','parc',this.value)">${[...Array(12)].map((_,i)=>`<option value="${i+1}"${(o.parc||1)===i+1?' selected':''}>${i+1}x${o.valor?' de '+R(o.valor/(i+1)):''}</option>`).join('')}</select></div>`:'')
- +`<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" style="width:20px;min-height:20px;height:20px" ${o.recebido?'checked':''} onchange="osRec('${o.id}',this.checked)">Recebido${o.recebido&&o.recebidoEm?' em '+esc(o.recebidoEm):''}</label></div></div>`}
-window.osPag=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pag=v;if(v==='Cartão'&&!o.parc)o.parc=1;save();osRender();toast('Forma de pagamento: '+(v||'não informada'),'ok')};
-window.osRec=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebido=ch;o.recebidoEm=ch?new Date().toLocaleDateString('pt-BR'):'';save();osRender();toast(ch?'Pagamento registrado como recebido.':'Recebimento desmarcado.','ok')};
+ const sel=(op,cur,fn,ph)=>`<select onchange="${fn}">${ph?'<option value="">'+ph+'</option>':''}${op.map(([v,l])=>`<option value="${esc(v)}"${String(cur)===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
+ const nx=(max,cur,fn)=>sel([...Array(max)].map((_,i)=>[i+1,(i+1)+'x']),cur||1,fn);
+ const rec=(ch,em,fn)=>`<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" style="width:20px;min-height:20px;height:20px" ${ch?'checked':''} onchange="${fn}">Recebido${ch&&em?' em '+esc(em):''}</label></div>`;
+ const BOL=['28/56/84','28/56/84/112','07/28/56/84/112'];
+ const mo=`<div class="pg"><b>Pagamento mão de obra</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label>${sel([['PIX','PIX'],['Cartão','Cartão']],o.pag,`osPag('${o.id}',this.value)`,'Selecione…')}</div>`
+  +(o.pag==='Cartão'?`<div><label>Parcelas</label>${nx(12,o.parc,`osF('${o.id}','parc',this.value)`)}</div>`:'')
+  +rec(o.recebido,o.recebidoEm,`osRec('${o.id}',this.checked)`)+`</div></div>`;
+ const eq=`<div class="pg"><b>Pagamento equipamentos</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label>${sel([['À vista','À vista'],['Cartão','Cartão'],['Boleto','Boleto']],o.pagEq,`osPagEq('${o.id}',this.value)`,'Selecione…')}</div>`
+  +(o.pagEq==='Cartão'?`<div><label>Parcelas (até 3x)</label>${nx(3,o.parcEq,`osF('${o.id}','parcEq',this.value)`)}</div>`:'')
+  +(o.pagEq==='Boleto'?`<div class="w2"><label>Condição do boleto</label>${sel(BOL.map(b=>[b,b+' dias']),o.boleto,`osF('${o.id}','boleto',this.value)`,'Selecione…')}</div>`:'')
+  +rec(o.recebidoEq,o.recebidoEqEm,`osRecEq('${o.id}',this.checked)`)+`</div></div>`;
+ return mo+eq}
+const hoje=()=>new Date().toLocaleDateString('pt-BR');
+window.osPag=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pag=v;if(v==='Cartão'&&!o.parc)o.parc=1;save();osRender();toast('Pagamento mão de obra: '+(v||'não informado'),'ok')};
+window.osPagEq=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pagEq=v;if(v==='Cartão'&&!o.parcEq)o.parcEq=1;save();osRender();toast('Pagamento equipamentos: '+(v||'não informado'),'ok')};
+window.osRec=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebido=ch;o.recebidoEm=ch?hoje():'';save();osRender();toast(ch?'Mão de obra recebida.':'Recebimento desmarcado.','ok')};
+window.osRecEq=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebidoEq=ch;o.recebidoEqEm=ch?hoje():'';save();osRender();toast(ch?'Equipamentos recebidos.':'Recebimento desmarcado.','ok')};
 boot0();
 </script></body></html>

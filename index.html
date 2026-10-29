@@ -110,8 +110,11 @@ tbody tr:hover{background:var(--ac2)}
 <div class="w2"><label>Prazo para execução do serviço</label><input id="o-prazo" placeholder="Ex.: 5 dias úteis"></div>
 <div><label>Garantia de serviço</label><input id="o-gs" value="90 dias"></div>
 <div class="w2"><label>Garantia de equipamentos</label><input id="o-ge" value="1 ano, conforme o fabricante"></div>
-<div><label>Forma de pagamento</label><select id="o-pag"><option>PIX</option><option>Cartão</option></select></div>
-<div id="o-parcw" style="display:none"><label>Parcelas no cartão</label><select id="o-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
+<div class="pg" style="grid-column:1/-1"><b>Pagamento de serviços</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pag"><option>PIX</option><option>À vista</option><option>Cartão</option></select></div>
+<div id="o-parcw" style="display:none"><label>Parcelas no cartão (até 12x)</label><select id="o-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div></div></div>
+<div class="pg" style="grid-column:1/-1"><b>Pagamento de materiais</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pagm"><option>À vista</option><option>Cartão</option><option>Boleto</option></select></div>
+<div id="o-parcmw" style="display:none"><label>Parcelas no cartão (até 3x)</label><select id="o-parcm"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
+<div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div></div>
 </div>
 <button class="btn" id="o-save">Salvar orçamento</button><button class="btn s" id="o-cancel" style="display:none;margin-left:8px">Cancelar edição</button>
 </div>
@@ -307,7 +310,7 @@ function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>`<tr><td>${i.k===
 $('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
  const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond()};
- if(editId){const o=DB.orc.find(x=>x.id===editId);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1})}
+ if(editId){const o=DB.orc.find(x=>x.id===editId);devolveEstoque(o);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1,aprovadoEm:''})}
  else DB.orc.push(Object.assign({id:crypto.randomUUID(),token:crypto.randomUUID(),n:DB.seq++,data:new Date().toLocaleDateString('pt-BR'),status:'Pendente',pago:0},dados));
  save();cancelEdit();render();toast('Orçamento salvo.','ok')};
 
@@ -407,17 +410,27 @@ $('r-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
 // ===== Condições da proposta, custo/lucro e finanças =====
 const itemCusto=i=>i.c!=null?i.c:((((i.k==='s'?DB.serv:DB.prod).find(x=>x.id===i.id))||{})[i.k==='s'?'custo':'compra']||0);
 const custoOrc=o=>o.itens.reduce((a,i)=>a+i.q*itemCusto(i),0);
-const parcShow=()=>{$('o-parcw').style.display=$('o-pag').value==='Cartão'?'':'none'};
-$('o-pag').onchange=parcShow;
-function getCond(){return{val:+$('o-val').value||10,prazo:$('o-prazo').value.trim(),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1}}
-function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=c.prazo||'';$('o-gs').value=c.gs||'90 dias';$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;parcShow()}
-const formaTxt=o=>{const c=o.cond;return !c||!c.pag?'-':c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':'PIX'};
+const parcShow=()=>{$('o-parcw').style.display=$('o-pag').value==='Cartão'?'':'none';const m=$('o-pagm').value;$('o-parcmw').style.display=m==='Cartão'?'':'none';$('o-bolw').style.display=m==='Boleto'?'':'none'};
+$('o-pag').onchange=parcShow;$('o-pagm').onchange=parcShow;
+function getCond(){const pm=$('o-pagm').value;return{val:+$('o-val').value||10,prazo:$('o-prazo').value.trim(),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
+function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=c.prazo||'';$('o-gs').value=c.gs||'90 dias';$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
+const totS=o=>o.itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),totM=o=>o.itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0);
+const formaTxt=o=>{const c=o.cond;if(!c||!c.pag)return'-';if(!c.pagm)return c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag;
+ const s=c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag,m=c.pagm==='Cartão'?'Cartão '+(c.parcm||1)+'x':c.pagm==='Boleto'?'Boleto '+(c.bol||''):'À vista',r=[];
+ if(totS(o)>0)r.push('Serviços: '+s);if(totM(o)>0)r.push('Materiais: '+m);return r.join(' · ')||'-'};
+function payLinhas(c,o,Rf){const tS=totS(o),tM=totM(o),r=[];
+ if(!c.pagm)return['Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+Rf(o.total/(c.parc||1)):c.pag==='À vista'?'À vista':'PIX')];
+ if(tS>0){const n=c.parc||1;r.push('Pagamento de serviços ('+Rf(tS)+'): '+(c.pag==='Cartão'?'Cartão de crédito em '+n+'x de '+Rf(tS/n):c.pag||'PIX'))}
+ if(tM>0){let x='À vista';if(c.pagm==='Cartão'){const n=c.parcm||1;x='Cartão de crédito em '+n+'x de '+Rf(tM/n)}
+  else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+' parcelas de '+Rf(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
+  r.push('Pagamento de materiais ('+Rf(tM)+'): '+x)}
+ return r}
 function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).getTime()+v*864e5).toLocaleDateString('pt-BR'),r=[];
  r.push('Validade da proposta: '+v+' dias (até '+ate+')');
  if(c.prazo)r.push('Prazo para execução do serviço: '+c.prazo);
  r.push('Garantia de serviço: '+(c.gs||'90 dias'));
  r.push('Garantia de equipamentos: '+(c.ge||'1 ano, conforme o fabricante'));
- r.push('Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+R2(o.total/(c.parc||1)):'PIX'));return r}
+ payLinhas(c,o,R2).forEach(l=>r.push(l));return r}
 window.pagar=async id=>{const o=DB.orc.find(x=>x.id===id);if(!await ask('Marcar como pago?','Orçamento nº '+o.n+' · '+R(o.total),'Marcar como pago'))return;o.pago=o.total;save();render()};
 function finData(){
  const de=$('f-de').value?new Date($('f-de').value+'T00:00:00'):null,ate=$('f-ate').value?new Date($('f-ate').value+'T23:59:59'):null,sit=$('f-sit').value;
@@ -439,7 +452,9 @@ $('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
 let editId=null;
 function cancelEdit(){editId=null;itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
 $('o-cancel').onclick=()=>{cancelEdit();renderItens()};
-window.editOrc=id=>{const o=DB.orc.find(x=>x.id===id);editId=id;itens=o.itens.map(i=>({...i}));
+window.editOrc=async id=>{const o=DB.orc.find(x=>x.id===id);
+ if(o.status==='Aprovado'&&!await ask('Editar o orçamento nº '+o.n+'?','Ele já foi aprovado. Ao salvar, o estoque dos produtos é devolvido e o orçamento volta para Pendente, para ser aprovado de novo (aí o estoque é descontado outra vez). Pagamentos já registrados são mantidos.','Editar'))return;
+ editId=id;itens=o.itens.map(i=>({...i}));
  $('o-tipo').value=o.tipo;$('o-desc').value=o.desc;setCond(o.cond||{});
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
  $('o-save').textContent='Salvar alterações (nº '+o.n+')';$('o-cancel').style.display='';renderItens();window.scrollTo(0,0)};
@@ -451,13 +466,14 @@ function render(){brand();upd();onbRender();osRender();relRender();solRender();f
  $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
  $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${p.venda?tag(p.compra,p.venda):'<span class="mu">valor a definir</span>'}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhum produto.</td></tr>';
  $('v-list').innerHTML=DB.serv.map(s=>`<tr><td>${esc(s.cod)}</td><td>${esc(s.tipo)}</td><td>${R(s.custo)}</td><td>${R(s.final)}</td><td>${pct(s.custo,s.final)}</td><td>${s.final?tag(s.custo,s.final):'<span class="mu">valor a definir</span>'}</td><td>${acts('serv',s.id)}</td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum serviço.</td></tr>';
- $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${o.n}</td><td>${o.data}</td><td>${esc(o.cli)}</td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> ${o.status==='Pendente'||o.status==='Em revisão'?`<button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
+ $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${o.n}</td><td>${o.data}</td><td>${esc(o.cli)}</td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> <button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'||o.status==='Em revisão'?`${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
 }
 // ===== Supabase: login, nuvem e aprovação pelo cliente =====
 const iso=s=>{const p=String(s).split('/');return p[2]+'-'+p[1]+'-'+p[0]};
 const linkOrc=o=>new URL('aprovar.html',location.href).href+'?t='+o.token;
 let sb=null,db=null,SESS=null,user=null,timer=null,poll=null;
 const setSync=t=>{$('sync').textContent=t};
+function devolveEstoque(o){if(!o.estq)return;o.estq=false;o.itens.filter(i=>i.k==='p').forEach(i=>{const p=DB.prod.find(x=>x.id===i.id);if(p)p.qtd+=i.q})}
 function baixaEstoque(o){if(o.estq)return;o.estq=true;
  o.itens.filter(i=>i.k==='p').forEach(i=>{const p=DB.prod.find(x=>x.id===i.id);if(p)p.qtd=Math.max(0,p.qtd-i.q)})}
 function setSess(s){SESS=s;db=s?supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false},global:{headers:{Authorization:'Bearer '+s.access_token}}}):null}

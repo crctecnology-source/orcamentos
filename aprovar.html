@@ -27,16 +27,17 @@ button:hover{filter:brightness(.93)}
 .a{background:#3a8d12}.n{background:#d71920}.v{background:var(--ac)}
 .st{font-weight:700;padding:12px;border-radius:10px;background:var(--ac2);color:var(--ac);text-align:center;margin-top:12px}
 input:not([type]),input[type=text],input[type=search],input[type=tel],textarea{text-transform:uppercase}
+input[readonly],[data-nocaps]{text-transform:none!important}
 ::placeholder{text-transform:none}
 </style></head><body><main id="app"><p class="mu">Carregando…</p></main>
 <script>
 /* CAIXA ALTA: todo campo de texto e comentário (e-mail, senha, números e datas ficam como estão) */
 (function(){
-  const ok=el=>{if(el.hasAttribute&&el.hasAttribute('data-nocaps'))return false;if(el.tagName==='TEXTAREA')return true;const t=(el.type||'text').toLowerCase();return t==='text'||t==='search'||t==='tel'};
+  const ok=el=>{if(el.readOnly||(el.hasAttribute&&el.hasAttribute('data-nocaps')))return false;if(el.tagName==='TEXTAREA')return true;const t=(el.type||'text').toLowerCase();return t==='text'||t==='search'||t==='tel'};
   [HTMLInputElement,HTMLTextAreaElement].forEach(C=>{const d=Object.getOwnPropertyDescriptor(C.prototype,'value');
-    Object.defineProperty(C.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,(typeof v==='string'&&ok(this))?v.toUpperCase():v)}})});
+    Object.defineProperty(C.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,(typeof v==='string'&&ok(this)&&!/^\s*(https?:\/\/|www\.)/i.test(v))?v.toUpperCase():v)}})});
   document.addEventListener('input',e=>{const el=e.target;if(e.isComposing||!el||!el.tagName||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||!ok(el))return;
-    const v=el.value,u=v.toUpperCase();if(v!==u){let s=null,x=null;try{s=el.selectionStart;x=el.selectionEnd}catch(_){}el.value=u;try{if(s!==null)el.setSelectionRange(s,x)}catch(_){}}},true);
+    const v=el.value;if(/^\s*(https?:\/\/|www\.)/i.test(v))return;const u=v.toUpperCase();if(v!==u){let s=null,x=null;try{s=el.selectionStart;x=el.selectionEnd}catch(_){}el.value=u;try{if(s!==null)el.setSelectionRange(s,x)}catch(_){}}},true);
 })();
 </script>
 <script>

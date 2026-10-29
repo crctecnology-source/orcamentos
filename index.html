@@ -76,6 +76,7 @@ tbody tr:hover{background:var(--ac2)}
 .st-i.done{color:var(--mu);text-decoration:line-through}.st-i.done .ck{background:#62b312;color:#fff}
 @media (max-width:600px){.w2{grid-column:1/-1}.bar{padding:6px 12px}.brand b{font-size:15px}.brand img{height:38px}main{padding:12px 4px 56px 10px}:root{--hh:60px}.layout{padding:0 6px}nav{width:48px;padding:6px;margin-top:12px;top:calc(var(--hh) + env(safe-area-inset-top,0px) + 12px)}nav button{width:36px;height:36px}}
 input:not([type]),input[type=text],input[type=search],input[type=tel],textarea{text-transform:uppercase}
+input[readonly],[data-nocaps]{text-transform:none!important}
 ::placeholder{text-transform:none}
 </style></head><body>
 <div id="auth" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto"><div class="card" style="width:100%;max-width:360px;margin:0"><h2>Orçamentos — acesso</h2>
@@ -219,11 +220,11 @@ input:not([type]),input[type=text],input[type=search],input[type=tel],textarea{t
 <script>
 /* CAIXA ALTA: todo campo de texto e comentário (e-mail, senha, números e datas ficam como estão) */
 (function(){
-  const ok=el=>{if(el.hasAttribute&&el.hasAttribute('data-nocaps'))return false;if(el.tagName==='TEXTAREA')return true;const t=(el.type||'text').toLowerCase();return t==='text'||t==='search'||t==='tel'};
+  const ok=el=>{if(el.readOnly||(el.hasAttribute&&el.hasAttribute('data-nocaps')))return false;if(el.tagName==='TEXTAREA')return true;const t=(el.type||'text').toLowerCase();return t==='text'||t==='search'||t==='tel'};
   [HTMLInputElement,HTMLTextAreaElement].forEach(C=>{const d=Object.getOwnPropertyDescriptor(C.prototype,'value');
-    Object.defineProperty(C.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,(typeof v==='string'&&ok(this))?v.toUpperCase():v)}})});
+    Object.defineProperty(C.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,(typeof v==='string'&&ok(this)&&!/^\s*(https?:\/\/|www\.)/i.test(v))?v.toUpperCase():v)}})});
   document.addEventListener('input',e=>{const el=e.target;if(e.isComposing||!el||!el.tagName||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||!ok(el))return;
-    const v=el.value,u=v.toUpperCase();if(v!==u){let s=null,x=null;try{s=el.selectionStart;x=el.selectionEnd}catch(_){}el.value=u;try{if(s!==null)el.setSelectionRange(s,x)}catch(_){}}},true);
+    const v=el.value;if(/^\s*(https?:\/\/|www\.)/i.test(v))return;const u=v.toUpperCase();if(v!==u){let s=null,x=null;try{s=el.selectionStart;x=el.selectionEnd}catch(_){}el.value=u;try{if(s!==null)el.setSelectionRange(s,x)}catch(_){}}},true);
 })();
 </script>
 <script>

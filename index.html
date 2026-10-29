@@ -75,6 +75,8 @@ tbody tr:hover{background:var(--ac2)}
 .st-i .ck{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ac2);color:var(--ac);display:grid;place-items:center;font-size:12px;font-weight:700}
 .st-i.done{color:var(--mu);text-decoration:line-through}.st-i.done .ck{background:#62b312;color:#fff}
 @media (max-width:600px){.w2{grid-column:1/-1}.bar{padding:6px 12px}.brand b{font-size:15px}.brand img{height:38px}main{padding:12px 4px 56px 10px}:root{--hh:60px}.layout{padding:0 6px}nav{width:48px;padding:6px;margin-top:12px;top:calc(var(--hh) + env(safe-area-inset-top,0px) + 12px)}nav button{width:36px;height:36px}}
+input:not([type]),input[type=text],input[type=search],input[type=tel],textarea{text-transform:uppercase}
+::placeholder{text-transform:none}
 </style></head><body>
 <div id="auth" style="position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto"><div class="card" style="width:100%;max-width:360px;margin:0"><h2>Orçamentos — acesso</h2>
 <label>E-mail</label><input id="a-email" type="email" autocomplete="username">
@@ -215,6 +217,16 @@ tbody tr:hover{background:var(--ac2)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
+/* CAIXA ALTA: todo campo de texto e comentário (e-mail, senha, números e datas ficam como estão) */
+(function(){
+  const ok=el=>{if(el.hasAttribute&&el.hasAttribute('data-nocaps'))return false;if(el.tagName==='TEXTAREA')return true;const t=(el.type||'text').toLowerCase();return t==='text'||t==='search'||t==='tel'};
+  [HTMLInputElement,HTMLTextAreaElement].forEach(C=>{const d=Object.getOwnPropertyDescriptor(C.prototype,'value');
+    Object.defineProperty(C.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,(typeof v==='string'&&ok(this))?v.toUpperCase():v)}})});
+  document.addEventListener('input',e=>{const el=e.target;if(e.isComposing||!el||!el.tagName||(el.tagName!=='INPUT'&&el.tagName!=='TEXTAREA')||!ok(el))return;
+    const v=el.value,u=v.toUpperCase();if(v!==u){let s=null,x=null;try{s=el.selectionStart;x=el.selectionEnd}catch(_){}el.value=u;try{if(s!==null)el.setSelectionRange(s,x)}catch(_){}}},true);
+})();
+</script>
+<script>
 // >>> Preencha com os dados do seu projeto Supabase (Project Settings > API)
 const SB_URL='https://wbwzwqrfvwymuluznqyt.supabase.co';
 const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indid3p3cXJmdnd5bXVsdXpucXl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIxODk4NDgsImV4cCI6MjEwNzc2NTg0OH0.aR1a1AtZ5jB-r7GpQ7F4O4IyQbOp8lrHkSZlvpPcx0A';
@@ -313,7 +325,7 @@ $('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.'
  const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond()};
  if(editId){const o=DB.orc.find(x=>x.id===editId);devolveEstoque(o);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1,aprovadoEm:''})}
  else DB.orc.push(Object.assign({id:crypto.randomUUID(),token:crypto.randomUUID(),n:DB.seq++,data:new Date().toLocaleDateString('pt-BR'),status:'Pendente',pago:0},dados));
- save();cancelEdit();render();toast('Orçamento salvo.','ok')};
+ save();cancelEdit();render();window.scrollTo(0,0);toast('Orçamento salvo. Formulário pronto para um novo.','ok')};
 
 const dig=s=>String(s||'').replace(/\D/g,'');
 window.zap=id=>{const o=DB.orc.find(x=>x.id===id);let t=dig(o.tel);if(!t)return toast('Cadastre o telefone/WhatsApp do cliente.');if(t.length<=11)t='55'+t;
@@ -455,7 +467,7 @@ $('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
  d.rows.forEach((r,ri)=>{d.m.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='#,##0.00'});d.pc.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='0.0"%"'})});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Financeiro');XLSX.writeFile(wb,'financeiro.xlsx')};
 let editId=null;
-function cancelEdit(){editId=null;itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
+function cancelEdit(){editId=null;itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('i-qtd').value='1';$('i-val').value='';fillItems();renderItens();$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
 $('o-cancel').onclick=()=>{cancelEdit();renderItens()};
 window.editOrc=async id=>{const o=DB.orc.find(x=>x.id===id);
  if(o.status==='Aprovado'&&!await ask('Editar o orçamento nº '+o.n+'?','Ele já foi aprovado. Ao salvar, o estoque dos produtos é devolvido e o orçamento volta para Pendente, para ser aprovado de novo (aí o estoque é descontado outra vez). Pagamentos já registrados são mantidos.','Editar'))return;

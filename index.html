@@ -102,6 +102,7 @@ tbody tr:hover{background:var(--ac2)}
 </div>
 <button class="btn s" id="i-add">+ Adicionar item</button>
 <div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade e o valor de cada item direto na lista.</div>
+<div class="mu" style="text-align:right">Subtotal serviços: <b id="o-ss">R$ 0,00</b></div><div class="mu" style="text-align:right">Subtotal produtos: <b id="o-sp">R$ 0,00</b></div>
 <div class="tot">Total: <span id="o-total">R$ 0,00</span></div>
 <div id="o-res" class="mu" style="text-align:right"></div>
 <h2 style="margin-top:14px">Condições da proposta</h2>
@@ -111,10 +112,10 @@ tbody tr:hover{background:var(--ac2)}
 <div><label>Garantia de serviço</label><input id="o-gs" value="90 dias"></div>
 <div class="w2"><label>Garantia de equipamentos</label><input id="o-ge" value="1 ano, conforme o fabricante"></div>
 <div class="pg" style="grid-column:1/-1"><b>Pagamento de serviços</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pag"><option>PIX</option><option>À vista</option><option>Cartão</option></select></div>
-<div id="o-parcw" style="display:none"><label>Parcelas no cartão (até 12x)</label><select id="o-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div></div></div>
+<div id="o-parcw" style="display:none"><label>Parcelas no cartão (até 12x)</label><select id="o-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div></div><div id="o-pvs" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
 <div class="pg" style="grid-column:1/-1"><b>Pagamento de materiais</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pagm"><option>À vista</option><option>Cartão</option><option>Boleto</option></select></div>
 <div id="o-parcmw" style="display:none"><label>Parcelas no cartão (até 3x)</label><select id="o-parcm"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
-<div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div></div>
+<div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div><div id="o-pvm" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
 </div>
 <button class="btn" id="o-save">Salvar orçamento</button><button class="btn s" id="o-cancel" style="display:none;margin-left:8px">Cancelar edição</button>
 </div>
@@ -306,7 +307,7 @@ window.edItem=(n,f,v)=>{const i=itens[n];
  if(f==='nome'){i.nome=v.trim()||i.nome}else{const x=parseFloat(v);if(!(x>=0)||(f==='q'&&x<=0))toast(f==='q'?'Quantidade inválida.':'Valor inválido.');else i[f]=x}
  renderItens()};
 function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum item adicionado.</td></tr>';
- const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
+ const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-ss').textContent=R(itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0));$('o-sp').textContent=R(itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0));pvPay();$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
 $('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
  const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond()};
@@ -316,7 +317,7 @@ $('o-save').onclick=()=>{if(!$('o-cli').value)return toast('Escolha um cliente.'
 
 const dig=s=>String(s||'').replace(/\D/g,'');
 window.zap=id=>{const o=DB.orc.find(x=>x.id===id);let t=dig(o.tel);if(!t)return toast('Cadastre o telefone/WhatsApp do cliente.');if(t.length<=11)t='55'+t;
- const m=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${o.n} (${o.data}):\n\n`+o.itens.map(i=>`• ${i.q}x ${i.nome} — ${R(i.q*i.u)}`).join('\n')+`\n\nTotal: ${R(o.total)}\n\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
+ const m=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${o.n} (${o.data}):\n\n`+o.itens.map(i=>`• ${i.q}x ${i.nome} — ${R(i.q*i.u)}`).join('\n')+`\n\nSubtotal serviços: ${R(totS(o))}\nSubtotal produtos: ${R(totM(o))}\nTotal: ${R(o.total)}\n\n${payLinhas(o.cond||{},o,R).join('\n')}\n\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
  window.open('https://wa.me/'+t+'?text='+encodeURIComponent(m),'_blank')};
 window.setSt=async(id,st)=>{const o=DB.orc.find(x=>x.id===id);if(!await ask((st==='Aprovado'?'Aprovar':'Recusar')+' o orçamento nº '+o.n+'?',st==='Aprovado'?'O estoque dos produtos do orçamento será descontado.':'O orçamento ficará como recusado.',st==='Aprovado'?'Aprovar':'Recusar',st!=='Aprovado'))return;
  o.status=st;
@@ -351,7 +352,7 @@ function mkPdf(o){
  if(o.desc){d.setFont(undefined,'bold');d.text('Descrição',M,y);d.setFont(undefined,'normal');y+=5;d.splitTextToSize(o.desc,182).forEach(s=>{pg(5);d.text(s,M,y);y+=5});y+=4}
  pg(14);d.setFont(undefined,'bold');d.text('Item',M,y);d.text('Qtd',120,y);d.text('Unit.',140,y);d.text('Total',170,y);d.setFont(undefined,'normal');y+=2;d.line(M,y,196,y);y+=6;
  o.itens.forEach(i=>{const l=d.splitTextToSize((i.k==='s'?'[Serviço] ':'[Produto] ')+i.nome,100);pg(l.length*5+2);d.text(l,M,y);d.text(String(i.q),120,y);d.text(R2(i.u),140,y);d.text(R2(i.q*i.u),170,y);y+=l.length*5+2});
- y+=2;d.line(M,y,196,y);y+=8;d.setFontSize(12);d.setFont(undefined,'bold');d.text('Total: '+R2(o.total),196,y,{align:'right'});
+ y+=2;d.line(M,y,196,y);y+=7;d.setFontSize(10);d.setFont(undefined,'normal');pg(26);d.text('Subtotal serviços: '+R2(totS(o)),196,y,{align:'right'});y+=6;d.text('Subtotal produtos: '+R2(totM(o)),196,y,{align:'right'});y+=8;d.setFontSize(12);d.setFont(undefined,'bold');d.text('Total: '+R2(o.total),196,y,{align:'right'});
  y+=10;d.setFontSize(10);pg(20);d.text('Condições',M,y);d.setFont(undefined,'normal');y+=6;
  condLinhas(o).forEach(l=>{d.splitTextToSize(l,182).forEach(s=>{pg(5);d.text(s,M,y);y+=5})});
  return d}
@@ -410,8 +411,12 @@ $('r-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
 // ===== Condições da proposta, custo/lucro e finanças =====
 const itemCusto=i=>i.c!=null?i.c:((((i.k==='s'?DB.serv:DB.prod).find(x=>x.id===i.id))||{})[i.k==='s'?'custo':'compra']||0);
 const custoOrc=o=>o.itens.reduce((a,i)=>a+i.q*itemCusto(i),0);
-const parcShow=()=>{$('o-parcw').style.display=$('o-pag').value==='Cartão'?'':'none';const m=$('o-pagm').value;$('o-parcmw').style.display=m==='Cartão'?'':'none';$('o-bolw').style.display=m==='Boleto'?'':'none'};
-$('o-pag').onchange=parcShow;$('o-pagm').onchange=parcShow;
+const parcShow=()=>{$('o-parcw').style.display=$('o-pag').value==='Cartão'?'':'none';const m=$('o-pagm').value;$('o-parcmw').style.display=m==='Cartão'?'':'none';$('o-bolw').style.display=m==='Boleto'?'':'none';pvPay()};
+$('o-pag').onchange=parcShow;$('o-pagm').onchange=parcShow;['o-parc','o-parcm','o-bol'].forEach(i=>$(i).onchange=pvPay);
+function pvPay(){const tS=itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),tM=itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0),c=getCond();
+ $('o-pvs').innerHTML=!tS?'Nenhum serviço neste orçamento.':'Total de serviços: <b>'+R(tS)+'</b> — '+(c.pag==='Cartão'?c.parc+'x de <b>'+R(tS/c.parc)+'</b>':(c.pag==='PIX'?'PIX':'à vista')+': <b>'+R(tS)+'</b>');
+ const n=c.bol?c.bol.split('/').length:1;
+ $('o-pvm').innerHTML=!tM?'Nenhum produto neste orçamento.':'Total de produtos: <b>'+R(tM)+'</b> — '+(c.pagm==='Cartão'?c.parcm+'x de <b>'+R(tM/c.parcm)+'</b>':c.pagm==='Boleto'?n+' parcelas de <b>'+R(tM/n)+'</b> ('+c.bol.split('/').join(' / ')+' dias)':'à vista: <b>'+R(tM)+'</b>')}
 function getCond(){const pm=$('o-pagm').value;return{val:+$('o-val').value||10,prazo:$('o-prazo').value.trim(),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
 function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=c.prazo||'';$('o-gs').value=c.gs||'90 dias';$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
 const totS=o=>o.itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),totM=o=>o.itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0);
@@ -591,7 +596,7 @@ window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id),cu=custoOrc(o),lu=o.total-c
  info('Orçamento nº '+o.n+(o.rev?' (rev. '+o.rev+')':''),
   `<div class="mu">${esc(o.data)} · ${esc(o.cli)} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
   `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
-  `</tbody></table><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
+  `</tbody></table><div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
 window.delSol=async id=>{const s=SOL.find(x=>x.id===id);
  if(!await ask('Excluir a solicitação #'+s.protocolo+'?','O cliente cadastrado a partir dela continua na aba Clientes.','Excluir',true))return;
  const {error}=await db.from('solicitacoes').delete().eq('id',id);if(error)return toast('Não foi possível excluir: '+error.message,'err');

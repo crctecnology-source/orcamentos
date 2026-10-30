@@ -455,13 +455,51 @@ function finData(){
  const l=DB.orc.filter(o=>o.status==='Aprovado').filter(o=>{const d=pd(o.aprovadoEm||o.data);return(!de||d>=de)&&(!ate||d<=ate)}).filter(o=>!sit||(sit==='Pago'?o.pago>=o.total:o.pago<o.total)).sort((a,b)=>a.n-b.n);
  const fat=l.reduce((a,o)=>a+o.total,0),cus=l.reduce((a,o)=>a+custoOrc(o),0),rec=l.reduce((a,o)=>a+(o.pago||0),0),luc=fat-cus,mg=fat?(luc/fat*100).toFixed(1)+'%':'—';
  const rows=l.map(o=>{const cu=custoOrc(o),lu=o.total-cu;return[o.n,o.aprovadoEm||o.data,o.cli,formaTxt(o),o.total,cu,lu,o.total?+(lu/o.total*100).toFixed(1):0,o.pago||0,o.pago>=o.total?'Pago':(o.pago?'Parcial':'Em aberto')]});
- return{titulo:'Relatório financeiro',cols:['Nº','Aprovado em','Cliente','Pagamento','Total','Custo','Lucro','Margem','Recebido','Situação'],rows,m:[4,5,6,8],pc:[7],fat,cus,luc,mg,rec,ab:fat-rec,
+ return{ids:l.map(o=>o.id),titulo:'Relatório financeiro',cols:['Nº','Aprovado em','Cliente','Pagamento','Total','Custo','Lucro','Margem','Recebido','Situação'],rows,m:[4,5,6,8],pc:[7],fat,cus,luc,mg,rec,ab:fat-rec,
   tot:'Faturamento: '+R2(fat)+' · Custo: '+R2(cus)+' · Lucro: '+R2(luc)+' · Margem: '+mg+' · Recebido: '+R2(rec)+' · A receber: '+R2(fat-rec)}}
+
+// ===== Recibo de pagamento (aba Finanças) =====
+function recBtn(id,sit){if(sit!=='Pago')return'<span class="mu">—</span>';const o=DB.orc.find(x=>x.id===id)||{};
+ return'<button class="ed" onclick="reciboOrc(\''+id+'\')">'+(o.recibo?'recibo nº '+String(o.recibo).padStart(4,'0'):'gerar recibo')+'</button>'}
+function extenso(v){v=Math.round(v*100);const r=Math.floor(v/100),c=v%100;
+ const U=['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'],
+ Dz=['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'],
+ Ct=['','cento','duzentos','trezentos','quatrocentos','quinhentos','seiscentos','setecentos','oitocentos','novecentos'];
+ const t999=n=>{if(n===100)return'cem';const p=[],h=Math.floor(n/100),re=n%100;if(h)p.push(Ct[h]);if(re){if(re<20)p.push(U[re]);else{const d=Math.floor(re/10),u=re%10;p.push(Dz[d]+(u?' e '+U[u]:''))}}return p.join(' e ')};
+ const num=n=>{if(n===0)return'zero';const g=[],bi=Math.floor(n/1e9),mi=Math.floor(n%1e9/1e6),mil=Math.floor(n%1e6/1e3),un=n%1e3;
+  if(bi)g.push([bi,t999(bi)+(bi>1?' bilhões':' bilhão')]);if(mi)g.push([mi,t999(mi)+(mi>1?' milhões':' milhão')]);
+  if(mil)g.push([mil,mil===1?'mil':t999(mil)+' mil']);if(un)g.push([un,t999(un)]);
+  return g.map((x,i)=>i===0?x[1]:(i===g.length-1&&(x[0]<100||x[0]%100===0)?' e ':', ')+x[1]).join('')};
+ const out=[];if(r>0)out.push(num(r)+((r>=1e6&&r%1e6===0)?' de reais':(r===1?' real':' reais')));
+ if(c>0)out.push(num(c)+(c===1?' centavo':' centavos'));return out.join(' e ')||'zero real'}
+function mkRecibo(o,num,dt){
+ const d=new window.jspdf.jsPDF(),e=DB.emp||{},c=DB.cli.find(x=>x.nome===o.cli)||{},M=14;let y=16,tx=M,bot=y;
+ if(e.logo){let h=20,w=h*e.lw/e.lh;if(w>60){w=60;h=w*e.lh/e.lw}try{d.addImage(e.logo,'JPEG',M,y,w,h);tx=M+w+6;bot=y+h}catch(err){}}
+ d.setFontSize(15);d.setFont(undefined,'bold');d.text(e.nome||'',tx,y+8);
+ y=bot+8;d.setDrawColor(180);d.line(M,y,196,y);y+=12;
+ d.setFontSize(17);d.setFont(undefined,'bold');d.text('RECIBO DE PAGAMENTO',M,y);d.setFontSize(12);d.text('Nº '+num,196,y,{align:'right'});y+=7;
+ d.setFont(undefined,'normal');d.setFontSize(10);d.text('Data: '+dt,196,y,{align:'right'});y+=8;
+ const val=o.total;d.setDrawColor(120);d.rect(M,y,182,16);d.setFontSize(10);d.text('VALOR',M+4,y+6);d.setFontSize(15);d.setFont(undefined,'bold');d.text(R2(val),M+178,y+11,{align:'right'});d.setFont(undefined,'normal');y+=26;
+ d.setFontSize(11);const ref='Recebemos de '+o.cli+(c.doc?' (CNPJ/CPF: '+c.doc+')':'')+' a importância de '+R2(val)+' ('+extenso(val)+'), referente ao orçamento nº '+o.n+(o.desc?' - '+String(o.desc).slice(0,300):'')+'. Forma de pagamento: '+formaTxt(o)+'.';
+ d.splitTextToSize(ref,182).forEach(s=>{d.text(s,M,y);y+=6});y+=6;
+ const bloco=(tit,ls)=>{d.setFontSize(11);d.setFont(undefined,'bold');d.text(tit,M,y);d.setFont(undefined,'normal');d.setFontSize(10);y+=6;
+  ls.filter(Boolean).forEach(l=>d.splitTextToSize(l,182).forEach(s=>{d.text(s,M,y);y+=5}));y+=6};
+ bloco('PAGADOR',[o.cli,c.doc&&'CNPJ/CPF: '+c.doc,(o.contato||c.contato)&&'Contato: '+(o.contato||c.contato),[(o.tel||c.tel)&&'Tel.: '+(o.tel||c.tel),c.email&&'E-mail: '+c.email].filter(Boolean).join('   '),[c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', ')]);
+ bloco('RECEBEDOR',[e.nome,e.doc&&'CNPJ/CPF: '+e.doc,e.end,[e.tel&&'Tel.: '+e.tel,e.mail&&'E-mail: '+e.mail].filter(Boolean).join('   ')]);
+ y+=16;d.line(60,y,150,y);y+=5;d.setFontSize(10);d.text(e.nome||'Recebedor',105,y,{align:'center'});
+ return d}
+window.reciboOrc=async id=>{const o=DB.orc.find(x=>x.id===id);if(!o)return;
+ if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');
+ if(!o.recibo){o.recibo=DB.recSeq||1;DB.recSeq=o.recibo+1;o.reciboEm=new Date().toLocaleDateString('pt-BR');save();finRender()}
+ const num=String(o.recibo).padStart(4,'0'),d=mkRecibo(o,num,o.reciboEm),name='Recibo-'+num+'.pdf';
+ if(/Android|iPhone|iPad/i.test(navigator.userAgent)){const f=new File([d.output('blob')],name,{type:'application/pdf'});
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:'Recibo nº '+num+' - '+R(o.total)});return}}catch(e){if(e.name==='AbortError')return}}
+ d.save(name);toast('Recibo nº '+num+' gerado.','ok')};
 function finRender(){const d=finData();
  const box=(t,v,c)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:10px"><div class="mu">${t}</div><b style="font-size:17px" class="${c||''}">${v}</b></div>`;
  $('f-cards').innerHTML=box('Faturamento',R(d.fat))+box('Custo',R(d.cus))+box('Lucro',R(d.luc),d.luc<0?'low':'ok')+box('Margem',d.mg,d.luc<0?'low':'ok')+box('Recebido',R(d.rec))+box('A receber',R(d.ab));
- $('f-h').innerHTML='<tr>'+d.cols.map(c=>'<th>'+c+'</th>').join('')+'</tr>';
- $('f-b').innerHTML=d.rows.map(r=>'<tr>'+r.map((v,i)=>'<td>'+esc(fv(d,v,i))+'</td>').join('')+'</tr>').join('')||'<tr><td class="mu">Nenhum orçamento aprovado no período.</td></tr>'}
+ $('f-h').innerHTML='<tr>'+d.cols.map(c=>'<th>'+c+'</th>').join('')+'<th>Recibo</th></tr>';
+ $('f-b').innerHTML=d.rows.map((r,ix)=>'<tr>'+r.map((v,i)=>'<td>'+esc(fv(d,v,i))+'</td>').join('')+'<td>'+recBtn(d.ids[ix],r[9])+'</td></tr>').join('')||'<tr><td class="mu">Nenhum orçamento aprovado no período.</td></tr>'}
 ['f-de','f-ate','f-sit'].forEach(i=>$(i).onchange=finRender);
 $('f-pdf').onclick=()=>{if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');relPdf(finData()).save('financeiro.pdf')};
 $('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carregar o gerador de Excel.');const d=finData(),ws=XLSX.utils.aoa_to_sheet([d.cols,...d.rows,[],['Faturamento',d.fat],['Custo',d.cus],['Lucro',d.luc],['Margem',d.mg],['Recebido',d.rec],['A receber',d.ab]]);

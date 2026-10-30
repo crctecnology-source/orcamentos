@@ -46,17 +46,6 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div><label>Telefone / WhatsApp *</label><input id="tel" type="tel" required></div>
 <div class="w2"><label>E-mail *</label><input id="email" type="email" required></div>
 </div>
-<h2>Endereço</h2>
-<div class="g">
-<div><label>CEP</label><input id="cep" maxlength="9" inputmode="numeric" placeholder="00000-000"></div>
-<div class="w2"><label>Endereço</label><input id="rua"></div>
-<div><label>Número</label><input id="numero"></div>
-<div class="w2"><label>Complemento (sala, prédio, andar…)</label><input id="comp"></div>
-<div><label>Bairro</label><input id="bairro"></div>
-<div><label>Cidade</label><input id="cidade"></div>
-<div><label>UF</label><input id="uf" maxlength="2"></div>
-</div>
-<div id="cepmsg" class="mu"></div>
 <h2>Sua solicitação</h2>
 <textarea id="desc" required placeholder="Descreva o que você precisa" maxlength="3000"></textarea>
 <div class="hp" aria-hidden="true"><label>Não preencha</label><input id="website" tabindex="-1" autocomplete="off"></div>
@@ -107,21 +96,10 @@ async function rpc(fn,body){
   applyTheme(emp.cor);$('hd').innerHTML=(emp.logo&&String(emp.logo).startsWith('data:image/')?'<img src="'+emp.logo+'" alt="" style="max-height:56px;max-width:180px;display:block;margin-bottom:8px">':'')+'<div><h1>'+esc(emp.nome)+'</h1><div class="mu">Faça sua solicitação abaixo. Entraremos em contato.</div></div>';
 })();
 
-$('cep').oninput=async e=>{
-  let v=e.target.value.replace(/\D/g,'').slice(0,8);e.target.value=v.length>5?v.slice(0,5)+'-'+v.slice(5):v;
-  if(v.length!==8)return;$('cepmsg').textContent='Buscando CEP…';
-  try{const d=await(await fetch('https://viacep.com.br/ws/'+v+'/json/')).json();
-    if(d.erro){$('cepmsg').textContent='CEP não encontrado. Preencha o endereço.';return}
-    $('rua').value=d.logradouro||'';$('bairro').value=d.bairro||'';$('cidade').value=d.localidade||'';$('uf').value=d.uf||'';
-    $('cepmsg').textContent='';$('numero').focus();
-  }catch(err){$('cepmsg').textContent='Não foi possível buscar o CEP. Preencha o endereço.'}
-};
-
 $('f').onsubmit=async ev=>{
   ev.preventDefault();$('msg').textContent='';$('go').disabled=true;
   const p={tipo:$('tipo').value,doc:$('doc').value.trim(),nome:$('nome').value.trim(),contato:$('contato').value.trim(),
-    tel:$('tel').value.trim(),email:$('email').value.trim(),cep:$('cep').value,rua:$('rua').value.trim(),numero:$('numero').value.trim(),
-    complemento:$('comp').value.trim(),bairro:$('bairro').value.trim(),cidade:$('cidade').value.trim(),uf:$('uf').value.trim().toUpperCase(),
+    tel:$('tel').value.trim(),email:$('email').value.trim(),
     descricao:$('desc').value.trim(),website:$('website').value};
   try{const n=await rpc('criar_solicitacao',{p_owner:owner,p});done(n,p)}
   catch(e){$('msg').textContent='Não foi possível enviar agora. Tente novamente em instantes.';$('go').disabled=false}
@@ -129,7 +107,7 @@ $('f').onsubmit=async ev=>{
 
 function novaSol(){$('ok').style.display='none';$('f').style.display='';window.scrollTo(0,0)}
 function done(n,p){
-  $('f').reset();$('cepmsg').textContent='';$('msg').textContent='';$('go').disabled=false;window.scrollTo(0,0);
+  $('f').reset();$('msg').textContent='';$('go').disabled=false;window.scrollTo(0,0);
   $('f').style.display='none';
   let t=String(emp.tel||'').replace(/\D/g,'');if(t&&t.length<=11)t='55'+t;
   const txt='Olá! Acabei de enviar a solicitação nº '+n+' ('+p.tipo+') pelo site.\nNome: '+p.nome+'\nContato: '+p.contato+' - '+p.tel;

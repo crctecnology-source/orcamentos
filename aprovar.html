@@ -76,7 +76,7 @@ function payLinhas(c,o){const tS=totS(o),tM=totM(o),r=[];
   if(!c.pagm)return['Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+R(o.total/(c.parc||1)):c.pag==='À vista'?'À vista':'PIX')];
   if(tS>0){const n=c.parc||1;r.push('Pagamento de serviços ('+R(tS)+'): '+(c.pag==='Cartão'?'Cartão de crédito em '+n+'x de '+R(tS/n):c.pag||'PIX'))}
   if(tM>0){let x='À vista';if(c.pagm==='Cartão'){const n=c.parcm||1;x='Cartão de crédito em '+n+'x de '+R(tM/n)}
-    else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+' parcelas de '+R(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
+    else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+(n>1?' parcelas':' parcela')+' de '+R(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
     r.push('Pagamento de materiais ('+R(tM)+'): '+x)}
   return r}
 function show(o){applyTheme((o.empresa||{}).cor);

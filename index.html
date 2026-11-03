@@ -111,14 +111,14 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <h2 style="margin-top:14px">Condições da proposta</h2>
 <div class="g">
 <div><label>Validade da proposta (dias)</label><input id="o-val" type="number" min="1" value="10"></div>
-<div class="w2"><label>Prazo para execução do serviço</label><input id="o-prazo" placeholder="Ex.: 5 dias úteis"></div>
-<div><label>Garantia de serviço</label><input id="o-gs" value="90 dias"></div>
+<div class="w2"><label>Prazo para execução do serviço</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><input id="o-prazo" type="number" min="1" step="1" placeholder="5" style="max-width:90px"><span style="font-size:14px">dias úteis de acordo com o agendamento</span></div></div>
+<div><label>Garantia de serviço</label><select id="o-gs"><option value="30 dias">30 dias</option><option value="45 dias">45 dias</option><option value="60 dias">60 dias</option><option value="90 dias" selected>90 dias</option><option value="120 dias">120 dias</option></select></div>
 <div class="w2"><label>Garantia de equipamentos</label><input id="o-ge" value="1 ano, conforme o fabricante"></div>
 <div class="pg" style="grid-column:1/-1"><b>Pagamento de serviços</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pag"><option>PIX</option><option>À vista</option><option>Cartão</option></select></div>
 <div id="o-parcw" style="display:none"><label>Parcelas no cartão (até 12x)</label><select id="o-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div></div><div id="o-pvs" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
 <div class="pg" style="grid-column:1/-1"><b>Pagamento de materiais</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pagm"><option>À vista</option><option>Cartão</option><option>Boleto</option></select></div>
 <div id="o-parcmw" style="display:none"><label>Parcelas no cartão (até 3x)</label><select id="o-parcm"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
-<div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div><div id="o-pvm" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
+<div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="07">07 dias</option><option value="07/28/56">07/28/56 dias</option><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div><div id="o-pvm" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
 </div>
 <button class="btn" id="o-save">Salvar orçamento</button><button class="btn s" id="o-cancel" style="display:none;margin-left:8px">Cancelar edição</button>
 </div>
@@ -284,10 +284,15 @@ function clear(ids){ids.forEach(i=>$(i).value='')}
 $('c-save').onclick=()=>{if(!$('c-nome').value.trim())return toast('Informe o nome do cliente.');
  upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
  clear(['c-id','c-nome','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);render()};
+const nk=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 $('p-save').onclick=()=>{if(!$('p-desc').value.trim())return toast('Informe a descrição.');
+ {const id=$('p-id').value,cd=nk($('p-cod').value),ds=nk($('p-desc').value),d1=cd&&DB.prod.find(x=>x.id!==id&&nk(x.cod)===cd),d2=DB.prod.find(x=>x.id!==id&&nk(x.desc)===ds);
+  if(d1)return toast('Já existe um produto com este código: '+d1.desc+'.');if(d2)return toast('Já existe um produto com esta descrição'+(d2.cod?' (código '+d2.cod+')':'')+'.')}
  upsert('prod',{id:$('p-id').value||uid(),desc:$('p-desc').value.trim(),cod:$('p-cod').value,compra:num('p-compra'),venda:num('p-venda'),qtd:num('p-qtd'),min:num('p-min')});
  clear(['p-id','p-desc','p-cod','p-compra','p-pct','p-venda','p-qtd','p-min']);render()};
 $('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return toast('Informe o tipo de serviço.');
+ {const id=$('v-id').value,cd=nk($('v-cod').value),ds=nk($('v-tipo').value),d1=cd&&DB.serv.find(x=>x.id!==id&&nk(x.cod)===cd),d2=DB.serv.find(x=>x.id!==id&&nk(x.tipo)===ds);
+  if(d1)return toast('Já existe um serviço com este código: '+d1.tipo+'.');if(d2)return toast('Já existe um serviço com esta descrição'+(d2.cod?' (código '+d2.cod+')':'')+'.')}
  upsert('serv',{id:$('v-id').value||uid(),tipo:$('v-tipo').value.trim(),cod:$('v-cod').value,custo:num('v-custo'),final:num('v-final')});
  clear(['v-id','v-tipo','v-cod','v-custo','v-pct','v-final']);render()};
 
@@ -429,9 +434,10 @@ $('o-pag').onchange=parcShow;$('o-pagm').onchange=parcShow;['o-parc','o-parcm','
 function pvPay(){const tS=itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),tM=itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0),c=getCond();
  $('o-pvs').innerHTML=!tS?'Nenhum serviço neste orçamento.':'Total de serviços: <b>'+R(tS)+'</b> — '+(c.pag==='Cartão'?c.parc+'x de <b>'+R(tS/c.parc)+'</b>':(c.pag==='PIX'?'PIX':'à vista')+': <b>'+R(tS)+'</b>');
  const n=c.bol?c.bol.split('/').length:1;
- $('o-pvm').innerHTML=!tM?'Nenhum produto neste orçamento.':'Total de produtos: <b>'+R(tM)+'</b> — '+(c.pagm==='Cartão'?c.parcm+'x de <b>'+R(tM/c.parcm)+'</b>':c.pagm==='Boleto'?n+' parcelas de <b>'+R(tM/n)+'</b> ('+c.bol.split('/').join(' / ')+' dias)':'à vista: <b>'+R(tM)+'</b>')}
-function getCond(){const pm=$('o-pagm').value;return{val:+$('o-val').value||10,prazo:$('o-prazo').value.trim(),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
-function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=c.prazo||'';$('o-gs').value=c.gs||'90 dias';$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
+ $('o-pvm').innerHTML=!tM?'Nenhum produto neste orçamento.':'Total de produtos: <b>'+R(tM)+'</b> — '+(c.pagm==='Cartão'?c.parcm+'x de <b>'+R(tM/c.parcm)+'</b>':c.pagm==='Boleto'?n+(n>1?' parcelas':' parcela')+' de <b>'+R(tM/n)+'</b> ('+c.bol.split('/').join(' / ')+' dias)':'à vista: <b>'+R(tM)+'</b>')}
+function getCond(){const pm=$('o-pagm').value;return{val:+$('o-val').value||10,prazo:(n=>n>0?n+(n===1?' dia útil':' dias úteis')+' de acordo com o agendamento':'')(parseInt($('o-prazo').value)),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
+function gsSet(v){v=v||'90 dias';const s=$('o-gs');if(![...s.options].some(o=>o.value===v)){const op=document.createElement('option');op.value=op.textContent=v;s.appendChild(op)}s.value=v}
+function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=(String(c.prazo||'').match(/\d+/)||[''])[0];gsSet(c.gs);$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
 const totS=o=>o.itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),totM=o=>o.itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0);
 const formaTxt=o=>{const c=o.cond;if(!c||!c.pag)return'-';if(!c.pagm)return c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag;
  const s=c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag,m=c.pagm==='Cartão'?'Cartão '+(c.parcm||1)+'x':c.pagm==='Boleto'?'Boleto '+(c.bol||''):'À vista',r=[];
@@ -440,7 +446,7 @@ function payLinhas(c,o,Rf){const tS=totS(o),tM=totM(o),r=[];
  if(!c.pagm)return['Forma de pagamento: '+(c.pag==='Cartão'?'Cartão de crédito em '+(c.parc||1)+'x de '+Rf(o.total/(c.parc||1)):c.pag==='À vista'?'À vista':'PIX')];
  if(tS>0){const n=c.parc||1;r.push('Pagamento de serviços ('+Rf(tS)+'): '+(c.pag==='Cartão'?'Cartão de crédito em '+n+'x de '+Rf(tS/n):c.pag||'PIX'))}
  if(tM>0){let x='À vista';if(c.pagm==='Cartão'){const n=c.parcm||1;x='Cartão de crédito em '+n+'x de '+Rf(tM/n)}
-  else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+' parcelas de '+Rf(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
+  else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+(n>1?' parcelas':' parcela')+' de '+Rf(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
   r.push('Pagamento de materiais ('+Rf(tM)+'): '+x)}
  return r}
 function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).getTime()+v*864e5).toLocaleDateString('pt-BR'),r=[];
@@ -515,7 +521,9 @@ window.editOrc=async id=>{const o=DB.orc.find(x=>x.id===id);
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
  $('o-save').textContent='Salvar alterações (nº '+o.n+')';$('o-cancel').style.display='';renderItens();window.scrollTo(0,0)};
 window.revisao=id=>{const o=DB.orc.find(x=>x.id===id);const n=prompt('O que o cliente pediu para mudar?',o.nota||'');if(n===null)return;o.status='Em revisão';o.nota=n;save();render()};
-function render(){brand();upd();onbRender();osRender();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
+const _cmp=(a,b)=>String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base',numeric:true});
+function ordena(){DB.cli.sort((a,b)=>_cmp(a.nome,b.nome));DB.prod.sort((a,b)=>_cmp(a.desc,b.desc));DB.serv.sort((a,b)=>_cmp(a.tipo,b.tipo))}
+function render(){ordena();brand();upd();onbRender();osRender();relRender();solRender();finRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
  const cur=$('o-cli').value;
  $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');$('o-cli').value=cur;
  fillItems();renderItens();
@@ -709,7 +717,7 @@ function pagHtml(o){if(o.status!=='Aprovada'&&o.status!=='Baixada')return'';
  const sel=(op,cur,fn,ph)=>`<select onchange="${fn}">${ph?'<option value="">'+ph+'</option>':''}${op.map(([v,l])=>`<option value="${esc(v)}"${String(cur)===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
  const nx=(max,cur,fn)=>sel([...Array(max)].map((_,i)=>[i+1,(i+1)+'x']),cur||1,fn);
  const rec=(ch,em,fn)=>`<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" style="width:20px;min-height:20px;height:20px" ${ch?'checked':''} onchange="${fn}">Recebido${ch&&em?' em '+esc(em):''}</label></div>`;
- const BOL=['28/56/84','28/56/84/112','07/28/56/84/112'];
+ const BOL=['07','07/28/56','28/56/84','28/56/84/112','07/28/56/84/112'];
  const mo=`<div class="pg"><b>Pagamento mão de obra</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label>${sel([['PIX','PIX'],['Cartão','Cartão']],o.pag,`osPag('${o.id}',this.value)`,'Selecione…')}</div>`
   +(o.pag==='Cartão'?`<div><label>Parcelas</label>${nx(12,o.parc,`osF('${o.id}','parc',this.value)`)}</div>`:'')
   +rec(o.recebido,o.recebidoEm,`osRec('${o.id}',this.checked)`)+`</div></div>`;

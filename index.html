@@ -120,6 +120,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="pg" style="grid-column:1/-1"><b>Pagamento de materiais</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label><select id="o-pagm"><option>À vista</option><option>Cartão</option><option>Boleto</option></select></div>
 <div id="o-parcmw" style="display:none"><label>Parcelas no cartão (até 3x)</label><select id="o-parcm"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option></select></div>
 <div id="o-bolw" class="w2" style="display:none"><label>Condição do boleto</label><select id="o-bol"><option value="07">07 dias</option><option value="07/28/56">07/28/56 dias</option><option value="28/56/84">28/56/84 dias</option><option value="28/56/84/112">28/56/84/112 dias</option><option value="07/28/56/84/112">07/28/56/84/112 dias</option></select></div></div><div id="o-pvm" class="mu" style="margin-top:8px;color:var(--tx)"></div></div>
+<div class="pg" id="o-docw" style="grid-column:1/-1"><b>Comprovante do pagamento</b><div class="g" style="margin-top:8px"><div><label>Tipo</label><select id="o-doct"><option value="">Nenhum</option><option value="Nota fiscal">Nota fiscal</option><option value="Recibo">Recibo</option></select></div><div id="o-docnw" style="display:none"><label id="o-docl">Nº da nota fiscal</label><input id="o-docn" placeholder="Opcional"></div></div></div>
 </div>
 <button class="btn" id="o-save">Salvar orçamento</button><button class="btn s" id="o-cancel" style="display:none;margin-left:8px">Cancelar edição</button>
 </div>
@@ -331,7 +332,8 @@ $('o-save').onclick=()=>{const num=$('o-num').value.trim();if(!editId&&!num)retu
  if(num&&DB.orc.some(x=>x.id!==editId&&x.num===num&&x.ano===oAno))return toast('Já existe o orçamento nº '+num+'/'+oAno+'.');
  if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
- const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond(),num:num,ano:num?oAno:undefined};
+ const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond(),num:num,ano:num?oAno:undefined,docTipo:$('o-doct').value,docNum:$('o-doct').value?$('o-docn').value.trim():''};
+ if(editId&&snap()===editSnap){const o=DB.orc.find(x=>x.id===editId);Object.assign(o,{num:dados.num,ano:dados.ano,docTipo:dados.docTipo,docNum:dados.docNum});save();cancelEdit();render();window.scrollTo(0,0);return toast('Salvo. Status, pagamento e estoque não foram alterados.','ok')}
  if(editId){const o=DB.orc.find(x=>x.id===editId);devolveEstoque(o);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1,aprovadoEm:''})}
  else DB.orc.push(Object.assign({id:crypto.randomUUID(),token:crypto.randomUUID(),n:DB.seq++,data:new Date().toLocaleDateString('pt-BR'),status:'Pendente',pago:0},dados));
  save();cancelEdit();render();window.scrollTo(0,0);toast('Orçamento salvo. Formulário pronto para um novo.','ok')};
@@ -399,7 +401,7 @@ function relData(){const t=$('r-tipo').value,m=[],pc=[];let titulo,cols,rows,tot
  if(t==='orc'){const de=$('r-de').value?new Date($('r-de').value+'T00:00:00'):null,ate=$('r-ate').value?new Date($('r-ate').value+'T23:59:59'):null,st=$('r-st').value;
   const l=DB.orc.filter(o=>(!st||o.status===st)&&(!de||pd(o.data)>=de)&&(!ate||pd(o.data)<=ate)).sort((a,b)=>a.n-b.n);
   titulo='Relatório de orçamentos'+(st?' - '+st:'');cols=['Nº','Data','Cliente','Tipo','Status','Total','Pago','Em aberto'];m.push(5,6,7);
-  rows=l.map(o=>[o.n,o.data,o.cli,o.tipo,o.status,o.total,o.pago||0,o.status==='Aprovado'?o.total-(o.pago||0):0]);
+  rows=l.map(o=>[nOrc(o),o.data,o.cli,o.tipo,o.status,o.total,o.pago||0,o.status==='Aprovado'?o.total-(o.pago||0):0]);
   tot='Total: '+R2(l.reduce((a,o)=>a+o.total,0))+' em '+l.length+' orçamento(s)'}
  else if(t==='cli'){titulo='Relação de clientes';cols=['Nome','Contato','CNPJ/CPF','Telefone','E-mail','Endereço'];
   rows=DB.cli.map(c=>[c.nome,c.contato||'',c.doc||'',c.tel||'',c.email||'',[c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', ')]);tot=rows.length+' cliente(s)'}
@@ -458,7 +460,7 @@ function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).ge
  r.push('Garantia de serviço: '+(c.gs||'90 dias'));
  r.push('Garantia de equipamentos: '+(c.ge||'1 ano, conforme o fabricante'));
  payLinhas(c,o,R2).forEach(l=>r.push(l));return r}
-window.pagar=async id=>{const o=DB.orc.find(x=>x.id===id);if(!await ask('Marcar como pago?','Orçamento nº '+nOrc(o)+' · '+R(o.total),'Marcar como pago'))return;o.pago=o.total;save();render()};
+window.pagar=async id=>{const o=DB.orc.find(x=>x.id===id);if(!await ask('Marcar como pago?','Orçamento nº '+nOrc(o)+' · '+R(o.total)+'. Em seguida ele abre para você informar a nota fiscal ou o recibo (opcional).','Marcar como pago'))return;o.pago=o.total;save();render();await window.editOrc(id,true);$('o-docw').scrollIntoView({behavior:'smooth',block:'center'});$('o-doct').focus()};
 function finData(){
  const de=$('f-de').value?new Date($('f-de').value+'T00:00:00'):null,ate=$('f-ate').value?new Date($('f-ate').value+'T23:59:59'):null,sit=$('f-sit').value;
  const l=DB.orc.filter(o=>o.status==='Aprovado').filter(o=>{const d=pd(o.aprovadoEm||o.data);return(!de||d>=de)&&(!ate||d<=ate)}).filter(o=>!sit||(sit==='Pago'?o.pago>=o.total:o.pago<o.total)).sort((a,b)=>a.n-b.n);
@@ -515,19 +517,22 @@ $('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
  d.rows.forEach((r,ri)=>{d.m.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='#,##0.00'});d.pc.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='0.0"%"'})});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Financeiro');XLSX.writeFile(wb,'financeiro.xlsx')};
 let editId=null;
-function cancelEdit(){editId=null;$('o-num').value='';setAno(new Date().getFullYear());itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('i-qtd').value='1';$('i-val').value='';fillItems();renderItens();$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
+function cancelEdit(){editId=null;$('o-doct').value='';$('o-docn').value='';docShow();$('o-num').value='';setAno(new Date().getFullYear());itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('i-qtd').value='1';$('i-val').value='';fillItems();renderItens();$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
 $('o-cancel').onclick=()=>{cancelEdit();renderItens()};
-window.editOrc=async id=>{const o=DB.orc.find(x=>x.id===id);
- if(o.status==='Aprovado'&&!await ask('Editar o orçamento nº '+nOrc(o)+'?','Ele já foi aprovado. Ao salvar, o estoque dos produtos é devolvido e o orçamento volta para Pendente, para ser aprovado de novo (aí o estoque é descontado outra vez). Pagamentos já registrados são mantidos.','Editar'))return;
- editId=id;itens=o.itens.map(i=>({...i}));$('o-num').value=o.num||'';setAno(o.ano||new Date().getFullYear());
+window.editOrc=async(id,skip)=>{const o=DB.orc.find(x=>x.id===id);
+ if(o.status==='Aprovado'&&!skip&&!await ask('Editar o orçamento nº '+nOrc(o)+'?','Ele já foi aprovado. Se você mudar itens, valores, cliente ou condições, o estoque é devolvido e ele volta para Pendente, para ser aprovado de novo. Se mudar só o número, a nota fiscal ou o recibo, nada disso acontece. Pagamentos já registrados são mantidos.','Editar'))return;
+ editId=id;itens=o.itens.map(i=>({...i}));$('o-num').value=o.num||'';setAno(o.ano||new Date().getFullYear());$('o-doct').value=o.docTipo||'';$('o-docn').value=o.docNum||'';docShow();
  $('o-tipo').value=o.tipo;$('o-desc').value=o.desc;setCond(o.cond||{});
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
- $('o-save').textContent='Salvar alterações (nº '+nOrc(o)+')';$('o-cancel').style.display='';renderItens();window.scrollTo(0,0)};
+ $('o-save').textContent='Salvar alterações (nº '+nOrc(o)+')';$('o-cancel').style.display='';renderItens();editSnap=snap();window.scrollTo(0,0)};
 window.revisao=id=>{const o=DB.orc.find(x=>x.id===id);const n=prompt('O que o cliente pediu para mudar?',o.nota||'');if(n===null)return;o.status='Em revisão';o.nota=n;save();render()};
 function nOrc(o){return o.num?o.num+'/'+(o.ano||''):String(o.n)}
 let oAno=new Date().getFullYear();
 function setAno(a){oAno=a;$('o-ano').textContent='/'+a}
 setAno(oAno);
+function docShow(){const v=$('o-doct').value;$('o-docnw').style.display=v?'':'none';$('o-docl').textContent='Nº da '+(v==='Recibo'?'recibo':'nota fiscal')}
+$('o-doct').onchange=docShow;
+let editSnap='';const snap=()=>JSON.stringify([$('o-cli').value,$('o-tipo').value,$('o-desc').value,itens.map(i=>[i.k,i.id,i.nome,i.q,i.u]),getCond()]);
 $('o-num').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'')};
 const _cmp=(a,b)=>String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base',numeric:true});
 function ordena(){DB.cli.sort((a,b)=>_cmp(a.nome,b.nome));DB.prod.sort((a,b)=>_cmp(a.desc,b.desc));DB.serv.sort((a,b)=>_cmp(a.tipo,b.tipo))}
@@ -660,10 +665,10 @@ function dlgShow(html,btns){return new Promise(res=>{const d=document.createElem
 const ask=(t,txt,ok,perigo)=>dlgShow('<h2>'+esc(t)+'</h2><p class="mu" style="font-size:14px">'+esc(txt||'')+'</p>',[['Cancelar','s',false],[ok||'Confirmar',perigo?'dgr':'',true]]);
 const info=(t,html)=>dlgShow('<h2>'+esc(t)+'</h2>'+html,[['Fechar','',true]]);
 window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id),cu=custoOrc(o),lu=o.total-cu;
- info('Orçamento nº '+o.n+(o.rev?' (rev. '+o.rev+')':''),
+ info('Orçamento nº '+nOrc(o)+(o.rev?' (rev. '+o.rev+')':''),
   `<div class="mu">${esc(o.data)} · ${esc(o.cli)} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
   `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
-  `</tbody></table><div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
+  `</tbody></table><div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.docTipo?`<p><b>${esc(o.docTipo)}:</b> ${esc(o.docNum||'sem número informado')}</p>`:'')+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
 window.delSol=async id=>{const s=SOL.find(x=>x.id===id);
  if(!await ask('Excluir a solicitação #'+s.protocolo+'?','O cliente cadastrado a partir dela continua na aba Clientes.','Excluir',true))return;
  const {error}=await db.from('solicitacoes').delete().eq('id',id);if(error)return toast('Não foi possível excluir: '+error.message,'err');
@@ -733,11 +738,14 @@ function pagHtml(o){if(o.status!=='Aprovada'&&o.status!=='Baixada')return'';
   +(o.pagEq==='Cartão'?`<div><label>Parcelas (até 3x)</label>${nx(3,o.parcEq,`osF('${o.id}','parcEq',this.value)`)}</div>`:'')
   +(o.pagEq==='Boleto'?`<div class="w2"><label>Condição do boleto</label>${sel(BOL.map(b=>[b,b+' dias']),o.boleto,`osF('${o.id}','boleto',this.value)`,'Selecione…')}</div>`:'')
   +rec(o.recebidoEq,o.recebidoEqEm,`osRecEq('${o.id}',this.checked)`)+`</div></div>`;
- return mo+eq}
+ const dc=`<div class="pg"><b>Comprovante do pagamento</b><div class="g" style="margin-top:8px"><div><label>Tipo</label>${sel([['Nota fiscal','Nota fiscal'],['Recibo','Recibo']],o.docTipo,`osDoc('${o.id}',this.value)`,'Nenhum')}</div>`
+  +(o.docTipo?`<div><label>Nº da ${o.docTipo==='Recibo'?'recibo':'nota fiscal'}</label><input value="${esc(o.docNum||'')}" placeholder="Opcional" onchange="osF('${o.id}','docNum',this.value)"></div>`:'')+`</div></div>`;
+ return mo+eq+dc}
 const hoje=()=>new Date().toLocaleDateString('pt-BR');
 window.osPag=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pag=v;if(v==='Cartão'&&!o.parc)o.parc=1;save();osRender();toast('Pagamento mão de obra: '+(v||'não informado'),'ok')};
 window.osPagEq=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pagEq=v;if(v==='Cartão'&&!o.parcEq)o.parcEq=1;save();osRender();toast('Pagamento equipamentos: '+(v||'não informado'),'ok')};
 window.osRec=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebido=ch;o.recebidoEm=ch?hoje():'';save();osRender();toast(ch?'Mão de obra recebida.':'Recebimento desmarcado.','ok')};
+window.osDoc=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.docTipo=v;if(!v)o.docNum='';save();osRender();toast(v?'Informe o número (opcional).':'Comprovante removido.','ok')};
 window.osRecEq=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebidoEq=ch;o.recebidoEqEm=ch?hoje():'';save();osRender();toast(ch?'Equipamentos recebidos.':'Recebimento desmarcado.','ok')};
 boot0();
 </script></body></html>

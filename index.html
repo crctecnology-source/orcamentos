@@ -719,15 +719,16 @@ function osMsg(o){const e=DB.emp||{},c=DB.cli.find(x=>x.id===o.cliId)||{},L=[];
  if(e.nome)L.push('','— '+e.nome);return L.join('\n')}
 function osZap(o){const c=DB.cli.find(x=>x.id===o.cliId)||{};if(!dig(c.tel))return toast('Este cliente está sem telefone. Cadastre o telefone na aba Clientes.');
  window.open('https://wa.me/'+waNum(c.tel)+'?text='+encodeURIComponent(osMsg(o)),'_blank')}
-function osLimpa(){osEditId=null;['os-id','os-eq','os-marca','os-modelo','os-serie','os-terc','os-def'].forEach(i=>$(i).value='');$('os-cli').value='';
+function osLimpa(){osEditId=null;['os-eq','os-marca','os-modelo','os-serie','os-terc','os-def'].forEach(i=>{const e=$(i);if(e)e.value=''});$('os-cli').value='';
  $('os-save').textContent='Salvar e enviar por WhatsApp';$('os-cancel').style.display='none';$('os-h').textContent='Nova ordem de serviço'}
 $('os-cancel').onclick=()=>{osLimpa();osRender()};
+const osPop=(t,txt)=>dlgShow('<h2>'+esc(t)+'</h2><p class="mu" style="font-size:14px">'+esc(txt)+'</p>',[['OK','',true]]);
 function osSalvar(zap){const cid=$('os-cli').value,eq=$('os-eq').value.trim(),df=$('os-def').value.trim();
  if(!cid)return toast('Escolha o cliente.');if(!eq)return toast('Informe o equipamento.');if(!df)return toast('Informe o defeito apresentado.');
  const c=DB.cli.find(x=>x.id===cid),d={cliId:cid,cli:c.nome,equip:eq,marca:$('os-marca').value.trim(),modelo:$('os-modelo').value.trim(),serie:$('os-serie').value.trim(),osTerc:$('os-terc').value.trim(),defeito:df};
- if(osEditId){const o=DB.os.find(x=>x.id===osEditId);Object.assign(o,d);save();osLimpa();render();window.scrollTo(0,0);toast('OS salva. Use o botão WhatsApp para reenviar ao cliente.','ok');return}
+ if(osEditId){const o=DB.os.find(x=>x.id===osEditId);Object.assign(o,d);save();osLimpa();render();window.scrollTo(0,0);osPop('Ordem de serviço salva','A OS nº '+osNum(o.n)+' foi atualizada com as alterações. Para reenviar ao cliente, use o botão WhatsApp na lista.');return}
  DB.os=DB.os||[];const o=Object.assign({id:uid(),n:DB.osSeq||1,data:new Date().toLocaleDateString('pt-BR'),status:'Aberta',valor:0,constatado:''},d);
- DB.osSeq=o.n+1;DB.os.push(o);save();osLimpa();render();window.scrollTo(0,0);toast('OS nº '+osNum(o.n)+' criada. Formulário pronto para uma nova.','ok');if(zap)osZap(o)}
+ DB.osSeq=o.n+1;DB.os.push(o);save();osLimpa();render();window.scrollTo(0,0);if(zap){toast('OS nº '+osNum(o.n)+' criada. Formulário pronto para uma nova.','ok');osZap(o)}else osPop('Ordem de serviço salva','A OS nº '+osNum(o.n)+' foi criada e já está na lista abaixo. O formulário está em branco para uma nova.')}
 $('os-save').onclick=()=>osSalvar(true);$('os-save2').onclick=()=>osSalvar(false);
 window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);osEditId=id;
  $('os-cli').value=o.cliId;$('os-eq').value=o.equip;$('os-marca').value=o.marca||'';$('os-modelo').value=o.modelo||'';$('os-serie').value=o.serie||'';$('os-terc').value=o.osTerc||'';$('os-def').value=o.defeito||'';

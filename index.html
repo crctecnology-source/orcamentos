@@ -202,7 +202,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="card"><h2>Ordens de serviço</h2><input class="q" data-t="#os-list>.os" placeholder="Buscar por número, cliente, equipamento, série ou status…"><div id="os-list"></div></div></section>
 <section id="s-sol"><div class="card"><h2>Link para seus clientes</h2><div class="mu">Envie este link ou coloque no seu site. Qualquer pessoa pode fazer uma solicitação, sem login.</div><div style="display:flex;gap:8px;margin-top:8px"><input id="s-link" readonly><button class="btn s" id="s-copy" style="margin:0">Copiar</button></div></div>
 <input class="q" data-t="#s-list>.card" placeholder="Buscar solicitação por cliente, tipo ou texto…" style="margin-bottom:12px"><div id="s-list"></div></section>
-<section id="s-fin"><div class="card"><h2>Finanças</h2><div class="mu">Considera orçamentos aprovados e ordens de serviço baixadas (com valor).</div><div class="g" style="margin-top:8px">
+<section id="s-fin"><div class="card"><h2>Finanças</h2><div class="mu">Considera orçamentos aprovados e ordens de serviço baixadas ou pagas (com valor).</div><div class="g" style="margin-top:8px">
 <div><label>Aprovados/baixados de</label><input id="f-de" type="date"></div>
 <div><label>Até</label><input id="f-ate" type="date"></div>
 <div><label>Situação</label><select id="f-sit"><option value="">Todas</option><option>Pago</option><option>Em aberto</option></select></div>
@@ -408,8 +408,8 @@ function relData(){const t=$('r-tipo').value,m=[],pc=[];let titulo,cols,rows,tot
   tot='Total: '+R2(l.reduce((a,o)=>a+o.total,0))+' em '+l.length+' orçamento(s)'}
  else if(t==='os'){const de=$('r-de').value?new Date($('r-de').value+'T00:00:00'):null,ate=$('r-ate').value?new Date($('r-ate').value+'T23:59:59'):null,st=$('r-st').value;
   const l=(DB.os||[]).filter(o=>(!st||o.status===st)&&(!de||pd(o.data)>=de)&&(!ate||pd(o.data)<=ate)).sort((a,b)=>a.n-b.n);
-  titulo='Relatório de ordens de serviço'+(st?' - '+st:'');cols=['Nº','Data','Cliente','Equipamento','Marca / Modelo','Nº série','Status','Valor','Pagamento','Situação','Comprovante'];m.push(7);
-  rows=l.map(o=>[_on(o.n),o.data,o.cli,o.equip||'',[o.marca,o.modelo].filter(Boolean).join(' / '),o.serie||'',o.status,o.valor||0,osForma(o),(o.status==='Aprovada'||o.status==='Baixada')&&o.valor?(osPaga(o)?'Pago':'Em aberto'):'-',o.docTipo?o.docTipo+(o.docNum?' '+o.docNum:''):'']);
+  titulo='Relatório de ordens de serviço'+(st?' - '+st:'');cols=['Nº','Data','Cliente','Equipamento','Marca / Modelo','Nº série','Status','Valor','Situação','Comprovante'];m.push(7);
+  rows=l.map(o=>[_on(o.n),o.data,o.cli,o.equip||'',[o.marca,o.modelo].filter(Boolean).join(' / '),o.serie||'',o.status,o.valor||0,o.valor?(osPaga(o)?'Pago':'Em aberto'):'-',osForma(o)]);
   tot='Total: '+R2(l.reduce((a,o)=>a+(o.valor||0),0))+' em '+l.length+' ordem(ns) de serviço'}
  else if(t==='cli'){titulo='Relação de clientes';cols=['Nome','Contato','CNPJ/CPF','Telefone','E-mail','Endereço'];
   rows=DB.cli.map(c=>[c.nome,c.contato||'',c.doc||'',c.tel||'',c.email||'',[c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', ')]);tot=rows.length+' cliente(s)'}
@@ -475,13 +475,13 @@ function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).ge
  payLinhas(c,o,R2).forEach(l=>r.push(l));return r}
 window.pagar=async id=>{const o=DB.orc.find(x=>x.id===id);if(!await ask('Marcar como pago?','Orçamento nº '+nOrc(o)+' · '+R(o.total)+'. Em seguida ele abre para você informar a nota fiscal ou o recibo (opcional).','Marcar como pago'))return;o.pago=o.total;save();render();await window.editOrc(id,true);$('o-docw').scrollIntoView({behavior:'smooth',block:'center'});$('o-doct').focus()};
 const _on=n=>String(n).padStart(4,'0');
-function osPaga(o){const p=[];if(o.pag)p.push(!!o.recebido);if(o.pagEq)p.push(!!o.recebidoEq);return p.length>0&&p.every(Boolean)}
-function osForma(o){const f=[];if(o.pag)f.push('Mão de obra: '+(o.pag==='Cartão'?'Cartão '+(o.parc||1)+'x':o.pag));if(o.pagEq)f.push('Equip.: '+(o.pagEq==='Cartão'?'Cartão '+(o.parcEq||1)+'x':o.pagEq==='Boleto'?'Boleto '+(o.boleto||''):o.pagEq));return f.join(' · ')||'-'}
+function osPaga(o){if(o.pago!==undefined)return !!o.pago;const p=[];if(o.pag)p.push(!!o.recebido);if(o.pagEq)p.push(!!o.recebidoEq);return p.length>0&&p.every(Boolean)}
+function osForma(o){return o.docTipo?o.docTipo+(o.docNum?' '+o.docNum:''):'-'}
 function finData(){
  const de=$('f-de').value?new Date($('f-de').value+'T00:00:00'):null,ate=$('f-ate').value?new Date($('f-ate').value+'T23:59:59'):null,sit=$('f-sit').value,org=$('f-org').value;
  const dt=s=>{const d=pd(s);return(!de||d>=de)&&(!ate||d<=ate)};let it=[];
  if(org!=='os')DB.orc.filter(o=>o.status==='Aprovado'&&dt(o.aprovadoEm||o.data)&&!(dist(o)&&totEf(o)<=0)).forEach(o=>it.push({id:o.id,n:nOrc(o),ord:o.n,dt:o.aprovadoEm||o.data,cli:o.cli,forma:formaTxt(o),tt:totEf(o),cu:custoEf(o),pg:pagoEf(o)}));
- if(org!=='orc')(DB.os||[]).filter(o=>o.status==='Baixada'&&(o.valor||0)>0&&dt(o.baixadaEm||o.data)).forEach(o=>it.push({id:'os:'+o.id,n:'OS '+_on(o.n),ord:1e6+o.n,dt:o.baixadaEm||o.data,cli:o.cli,forma:osForma(o),tt:o.valor,cu:0,pg:osPaga(o)?o.valor:0}));
+ if(org!=='orc')(DB.os||[]).filter(o=>(o.valor||0)>0&&(o.status==='Baixada'||osPaga(o))&&dt(o.baixadaEm||o.pagoEm||o.data)).forEach(o=>it.push({id:'os:'+o.id,n:'OS '+_on(o.n),ord:1e6+o.n,dt:o.baixadaEm||o.pagoEm||o.data,cli:o.cli,forma:osForma(o),tt:o.valor,cu:0,pg:osPaga(o)?o.valor:0}));
  it=it.filter(x=>!sit||(sit==='Pago'?x.pg>=x.tt:x.pg<x.tt)).sort((a,b)=>a.ord-b.ord);
  const fat=it.reduce((a,x)=>a+x.tt,0),cus=it.reduce((a,x)=>a+x.cu,0),rec=it.reduce((a,x)=>a+x.pg,0),luc=fat-cus,mg=fat?(luc/fat*100).toFixed(1)+'%':'—';
  const rows=it.map(x=>{const lu=x.tt-x.cu;return[x.n,x.dt,x.cli,x.forma,x.tt,x.cu,lu,x.tt?+(lu/x.tt*100).toFixed(1):0,x.pg,x.pg>=x.tt?'Pago':(x.pg?'Parcial':'Em aberto')]});
@@ -489,7 +489,7 @@ function finData(){
   tot:'Faturamento: '+R2(fat)+' · Custo: '+R2(cus)+' · Lucro: '+R2(luc)+' · Margem: '+mg+' · Recebido: '+R2(rec)+' · A receber: '+R2(fat-rec)}}
 
 // ===== Recibo de pagamento (aba Finanças) =====
-function recBtn(id,sit){if(String(id).startsWith('os:'))return'<span class="mu">—</span>';if(sit!=='Pago')return'<span class="mu">—</span>';const o=DB.orc.find(x=>x.id===id)||{};
+function recBtn(id,sit){if(sit!=='Pago')return'<span class="mu">—</span>';const o=(String(id).startsWith('os:')?DB.os.find(x=>x.id===id.slice(3)):DB.orc.find(x=>x.id===id))||{};
  return'<button class="ed" onclick="reciboOrc(\''+id+'\')">'+(o.recibo?'recibo nº '+String(o.recibo).padStart(4,'0'):'gerar recibo')+'</button>'}
 function extenso(v){v=Math.round(v*100);const r=Math.floor(v/100),c=v%100;
  const U=['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'],
@@ -502,15 +502,16 @@ function extenso(v){v=Math.round(v*100);const r=Math.floor(v/100),c=v%100;
   return g.map((x,i)=>i===0?x[1]:(i===g.length-1&&(x[0]<100||x[0]%100===0)?' e ':', ')+x[1]).join('')};
  const out=[];if(r>0)out.push(num(r)+((r>=1e6&&r%1e6===0)?' de reais':(r===1?' real':' reais')));
  if(c>0)out.push(num(c)+(c===1?' centavo':' centavos'));return out.join(' e ')||'zero real'}
-function mkRecibo(o,num,dt){
+function mkRecibo(o,num,dt,x){
  const d=new window.jspdf.jsPDF(),e=DB.emp||{},c=DB.cli.find(x=>x.nome===o.cli)||{},M=14;let y=16,tx=M,bot=y;
  if(e.logo){let h=20,w=h*e.lw/e.lh;if(w>60){w=60;h=w*e.lh/e.lw}try{d.addImage(e.logo,'JPEG',M,y,w,h);tx=M+w+6;bot=y+h}catch(err){}}
  d.setFontSize(15);d.setFont(undefined,'bold');d.text(e.nome||'',tx,y+8);
  y=bot+8;d.setDrawColor(180);d.line(M,y,196,y);y+=12;
  d.setFontSize(17);d.setFont(undefined,'bold');d.text('RECIBO DE PAGAMENTO',M,y);d.setFontSize(12);d.text('Nº '+num,196,y,{align:'right'});y+=7;
  d.setFont(undefined,'normal');d.setFontSize(10);d.text('Data: '+dt,196,y,{align:'right'});y+=8;
- const val=totEf(o);d.setDrawColor(120);d.rect(M,y,182,16);d.setFontSize(10);d.text('VALOR',M+4,y+6);d.setFontSize(15);d.setFont(undefined,'bold');d.text(R2(val),M+178,y+11,{align:'right'});d.setFont(undefined,'normal');y+=26;
- d.setFontSize(11);const ref='Recebemos de '+o.cli+(c.doc?' (CNPJ/CPF: '+c.doc+')':'')+' a importância de '+R2(val)+' ('+extenso(val)+'), referente ao orçamento nº '+nOrc(o)+(o.desc?' - '+String(o.desc).slice(0,300):'')+'. Forma de pagamento: '+formaTxt(o)+'.'+(o.distrib==='sim'?' Os materiais foram faturados diretamente pelo distribuidor e não estão incluídos neste recibo.':'');
+ const val=x?x.val:totEf(o);d.setDrawColor(120);d.rect(M,y,182,16);d.setFontSize(10);d.text('VALOR',M+4,y+6);d.setFontSize(15);d.setFont(undefined,'bold');d.text(R2(val),M+178,y+11,{align:'right'});d.setFont(undefined,'normal');y+=26;
+ d.setFontSize(11);let ref='Recebemos de '+o.cli+(c.doc?' (CNPJ/CPF: '+c.doc+')':'')+' a importância de '+R2(val)+' ('+extenso(val)+'), referente ao orçamento nº '+nOrc(o)+(o.desc?' - '+String(o.desc).slice(0,300):'')+'. Forma de pagamento: '+formaTxt(o)+'.'+(o.distrib==='sim'?' Os materiais foram faturados diretamente pelo distribuidor e não estão incluídos neste recibo.':'');
+ if(x)ref='Recebemos de '+o.cli+(c.doc?' (CNPJ/CPF: '+c.doc+')':'')+' a importância de '+R2(val)+' ('+extenso(val)+'), referente '+x.ref+'.'+(x.forma&&x.forma!=='-'?' Comprovante: '+x.forma+'.':'');
  d.splitTextToSize(ref,182).forEach(s=>{d.text(s,M,y);y+=6});y+=6;
  const bloco=(tit,ls)=>{d.setFontSize(11);d.setFont(undefined,'bold');d.text(tit,M,y);d.setFont(undefined,'normal');d.setFontSize(10);y+=6;
   ls.filter(Boolean).forEach(l=>d.splitTextToSize(l,182).forEach(s=>{d.text(s,M,y);y+=5}));y+=6};
@@ -518,12 +519,12 @@ function mkRecibo(o,num,dt){
  bloco('RECEBEDOR',[e.nome,e.doc&&'CNPJ/CPF: '+e.doc,e.end,[e.tel&&'Tel.: '+e.tel,e.mail&&'E-mail: '+e.mail].filter(Boolean).join('   ')]);
  y+=16;d.line(60,y,150,y);y+=5;d.setFontSize(10);d.text(e.nome||'Recebedor',105,y,{align:'center'});
  return d}
-window.reciboOrc=async id=>{const o=DB.orc.find(x=>x.id===id);if(!o)return;
+window.reciboOrc=async id=>{const isOs=String(id).startsWith('os:'),o=isOs?DB.os.find(x=>x.id===id.slice(3)):DB.orc.find(x=>x.id===id);if(!o)return;
  if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');
  if(!o.recibo){o.recibo=DB.recSeq||1;DB.recSeq=o.recibo+1;o.reciboEm=new Date().toLocaleDateString('pt-BR');save();finRender()}
- const num=String(o.recibo).padStart(4,'0'),d=mkRecibo(o,num,o.reciboEm),name='Recibo-'+num+'.pdf';
+ const num=String(o.recibo).padStart(4,'0'),xr=isOs?{val:o.valor,ref:'à ordem de serviço nº '+_on(o.n)+' ('+[o.equip,o.marca,o.modelo].filter(Boolean).join(' · ')+')',forma:osForma(o)}:null,d=mkRecibo(o,num,o.reciboEm,xr),name='Recibo-'+num+'.pdf';
  if(/Android|iPhone|iPad/i.test(navigator.userAgent)){const f=new File([d.output('blob')],name,{type:'application/pdf'});
-  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:'Recibo nº '+num+' - '+R(totEf(o))});return}}catch(e){if(e.name==='AbortError')return}}
+  try{if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],text:'Recibo nº '+num+' - '+R(xr?xr.val:totEf(o))});return}}catch(e){if(e.name==='AbortError')return}}
  d.save(name);toast('Recibo nº '+num+' gerado.','ok')};
 function finRender(){const d=finData();
  const box=(t,v,c)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:10px"><div class="mu">${t}</div><b style="font-size:17px" class="${c||''}">${v}</b></div>`;
@@ -714,8 +715,7 @@ function osMsg(o){const e=DB.emp||{},c=DB.cli.find(x=>x.id===o.cliId)||{},L=[];
  L.push('Equipamento: '+o.equip);if(o.marca)L.push('Marca: '+o.marca);if(o.modelo)L.push('Modelo: '+o.modelo);if(o.serie)L.push('Nº de série: '+o.serie);if(o.osTerc)L.push('Nº O.S. terceiros: '+o.osTerc);
  L.push('Defeito apresentado: '+o.defeito,'','Status: '+o.status);
  if(o.constatado)L.push('Defeito constatado: '+o.constatado);if(o.valor)L.push('Valor: '+R(o.valor));
- if(o.pag)L.push('Pagamento mão de obra: '+(o.pag==='Cartão'?'Cartão em '+(o.parc||1)+'x':'PIX')+(o.recebido?' (recebido)':''));
- if(o.pagEq)L.push('Pagamento equipamentos: '+(o.pagEq==='Cartão'?'Cartão em '+(o.parcEq||1)+'x':o.pagEq==='Boleto'?'Boleto'+(o.boleto?' '+o.boleto+' dias':''):'À vista')+(o.recebidoEq?' (recebido)':''));
+ if(osPaga(o))L.push('Pagamento: recebido'+(o.docTipo?' ('+o.docTipo+(o.docNum?' nº '+o.docNum:'')+')':''));
  if(e.nome)L.push('','— '+e.nome);return L.join('\n')}
 function osZap(o){const c=DB.cli.find(x=>x.id===o.cliId)||{};if(!dig(c.tel))return toast('Este cliente está sem telefone. Cadastre o telefone na aba Clientes.');
  window.open('https://wa.me/'+waNum(c.tel)+'?text='+encodeURIComponent(osMsg(o)),'_blank')}
@@ -730,11 +730,30 @@ function osSalvar(zap){const cid=$('os-cli').value,eq=$('os-eq').value.trim(),df
  DB.os=DB.os||[];const o=Object.assign({id:uid(),n:DB.osSeq||1,data:new Date().toLocaleDateString('pt-BR'),status:'Aberta',valor:0,constatado:''},d);
  DB.osSeq=o.n+1;DB.os.push(o);save();osLimpa();render();window.scrollTo(0,0);if(zap){toast('OS nº '+osNum(o.n)+' criada. Formulário pronto para uma nova.','ok');osZap(o)}else osPop('Ordem de serviço salva','A OS nº '+osNum(o.n)+' foi criada e já está na lista abaixo. O formulário está em branco para uma nova.')}
 $('os-save').onclick=()=>osSalvar(true);$('os-save2').onclick=()=>osSalvar(false);
-window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);osEditId=id;
- $('os-cli').value=o.cliId;$('os-eq').value=o.equip;$('os-marca').value=o.marca||'';$('os-modelo').value=o.modelo||'';$('os-serie').value=o.serie||'';$('os-terc').value=o.osTerc||'';$('os-def').value=o.defeito||'';
- $('os-save').textContent='Salvar alterações';$('os-cancel').style.display='';$('os-h').textContent='Editar OS nº '+osNum(o.n);osRender();window.scrollTo(0,0)};
-window.osSt=(id,st)=>{const o=DB.os.find(x=>x.id===id);o.status=st;if(st==='Baixada')o.baixadaEm=o.baixadaEm||new Date().toLocaleDateString('pt-BR');else delete o.baixadaEm;save();osRender();toast('Status: '+st,'ok')};
-window.osF=(id,f,v)=>{const o=DB.os.find(x=>x.id===id);o[f]=(f==='valor'||f==='parc'||f==='parcEq')?(parseFloat(v)||0):v.trim();save();toast('Salvo.','ok')};
+window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);if(!o)return;
+ const d=document.createElement('div');d.className='ov';
+ d.innerHTML='<div class="card dg" style="max-width:640px"><h2>Editar OS nº '+osNum(o.n)+'</h2><div class="g"><div class="w2"><label>Cliente</label><select id="ox-cli"></select></div><div class="w2"><label>Equipamento</label><input id="ox-eq"></div><div><label>Marca</label><input id="ox-marca"></div><div><label>Modelo</label><input id="ox-modelo"></div><div><label>Nº de série</label><input id="ox-serie"></div><div><label>Nº O.S. terceiros</label><input id="ox-terc"></div><div class="w2"><label>Defeito apresentado</label><textarea id="ox-def"></textarea></div></div><div class="dgb" style="margin-top:12px"><button class="btn s" id="ox-cancel">Cancelar</button><button class="btn" id="ox-save">Salvar</button></div></div>';
+ document.body.appendChild(d);const q=i=>d.querySelector('#'+i);
+ q('ox-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>'<option value="'+c.id+'">'+esc(c.nome)+'</option>').join('');
+ q('ox-cli').value=o.cliId||'';q('ox-eq').value=o.equip||'';q('ox-marca').value=o.marca||'';q('ox-modelo').value=o.modelo||'';q('ox-serie').value=o.serie||'';q('ox-terc').value=o.osTerc||'';q('ox-def').value=o.defeito||'';
+ q('ox-cancel').onclick=()=>d.remove();
+ q('ox-save').onclick=()=>{const cid=q('ox-cli').value,eq=q('ox-eq').value.trim(),df=q('ox-def').value.trim();
+  if(!cid)return toast('Escolha o cliente.');if(!eq)return toast('Informe o equipamento.');if(!df)return toast('Informe o defeito apresentado.');
+  const c=DB.cli.find(x=>x.id===cid);Object.assign(o,{cliId:cid,cli:c.nome,equip:eq,marca:q('ox-marca').value.trim(),modelo:q('ox-modelo').value.trim(),serie:q('ox-serie').value.trim(),osTerc:q('ox-terc').value.trim(),defeito:df});
+  save();d.remove();render();osPop('Ordem de serviço salva','A OS nº '+osNum(o.n)+' foi salva com as alterações.')};
+ q('ox-eq').focus()};
+window.osUi=id=>{const c=$('osc-'+id),g=f=>c.querySelector('[data-f="'+f+'"]'),st=g('status').value,pg=g('pago').checked,tp=g('docTipo').value;
+ c.querySelector('.os-mais').style.display=st!=='Aberta'?'':'none';
+ c.querySelector('.os-pag').style.display=(st==='Aprovada'||st==='Baixada')?'':'none';
+ c.querySelector('.os-doc').style.display=pg?'':'none';
+ c.querySelector('.os-docn').style.display=(pg&&tp)?'':'none';
+ c.querySelector('.os-docl').textContent='Nº da '+(tp==='Recibo'?'recibo':'nota fiscal')};
+window.osSaveCard=id=>{const o=DB.os.find(x=>x.id===id),c=$('osc-'+id);if(!o||!c)return;const g=f=>c.querySelector('[data-f="'+f+'"]'),hj=new Date().toLocaleDateString('pt-BR');
+ const st=g('status').value,pg=(st==='Aprovada'||st==='Baixada')&&g('pago').checked;
+ o.status=st;if(st==='Baixada')o.baixadaEm=o.baixadaEm||hj;else delete o.baixadaEm;
+ o.constatado=g('constatado').value.trim();o.valor=parseFloat(g('valor').value)||0;
+ o.pago=pg;if(pg){o.pagoEm=o.pagoEm||hj;o.docTipo=g('docTipo').value;o.docNum=o.docTipo?g('docNum').value.trim():''}else{o.pagoEm='';o.docTipo='';o.docNum=''}
+ save();render();osPop('Ordem de serviço salva','A OS nº '+osNum(o.n)+' foi salva com as alterações.')};
 window.osZapId=id=>osZap(DB.os.find(x=>x.id===id));
 window.orcOS=id=>{const o=DB.os.find(x=>x.id===id);if(!o)return;
  const L=['REF. ORDEM DE SERVIÇO Nº '+_on(o.n),'Equipamento: '+(o.equip||'')+[o.marca&&' / Marca: '+o.marca,o.modelo&&' / Modelo: '+o.modelo,o.serie&&' / Nº de série: '+o.serie].filter(Boolean).join(''),'Defeito apresentado: '+(o.defeito||'')];
@@ -744,37 +763,19 @@ window.osDel=async id=>{const o=DB.os.find(x=>x.id===id);if(!await ask('Excluir 
  DB.os=DB.os.filter(x=>x.id!==id);if(osEditId===id)osLimpa();save();render();toast('OS excluída.','ok')};
 function osRender(){DB.os=DB.os||[];const cur=$('os-cli').value;
  $('os-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.contato?' — '+esc(c.contato):''}</option>`).join('');$('os-cli').value=cur;
- const eo=osEditId&&DB.os.find(x=>x.id===osEditId);
- $('os-num').textContent=eo?'OS nº '+osNum(eo.n):'Número desta OS: '+osNum(DB.osSeq||1)+' (gerado automaticamente)';
- $('os-list').innerHTML=DB.os.slice().sort((a,b)=>b.n-a.n).map(o=>{const c=DB.cli.find(x=>x.id===o.cliId),mais=o.status!=='Aberta';
-  return `<div class="os"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>OS nº ${osNum(o.n)}</b><span><span class="bd ${osCls[o.status]||''}">${esc(o.status)}</span> <span class="mu">${esc(o.data)}</span></span></div>
+ $('os-num').textContent='Número desta OS: '+osNum(DB.osSeq||1)+' (gerado automaticamente)';
+ const ck='width:20px;min-height:20px;height:20px',lb='display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px';
+ $('os-list').innerHTML=DB.os.slice().sort((a,b)=>b.n-a.n).map(o=>{const c=DB.cli.find(x=>x.id===o.cliId),pg=osPaga(o),mais=o.status!=='Aberta',mp=o.status==='Aprovada'||o.status==='Baixada';
+  return `<div class="os" id="osc-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>OS nº ${osNum(o.n)}</b><span><span class="bd ${osCls[o.status]||''}">${esc(o.status)}</span> <span class="mu">${esc(o.data)}</span></span></div>
   <div style="margin-top:4px"><b>${esc(o.cli)}</b>${c&&c.tel?` <span class="mu">· ${esc(c.tel)}</span>`:''}</div>
   <div>${esc([o.equip,o.marca,o.modelo].filter(Boolean).join(' · '))}</div>
   <div class="mu">${esc([o.serie&&'Série: '+o.serie,o.osTerc&&'O.S. terceiros: '+o.osTerc].filter(Boolean).join(' · '))}</div>
   <div style="margin-top:6px;white-space:pre-wrap"><span class="mu">Defeito apresentado:</span> ${esc(o.defeito)}</div>
-  <div style="margin-top:10px;max-width:260px"><label>Status</label><select onchange="osSt('${o.id}',this.value)">${OSST.map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('')}</select></div>
-  ${mais?`<div class="g" style="margin-top:10px"><div class="w2"><label>Defeito constatado</label><textarea onchange="osF('${o.id}','constatado',this.value)">${esc(o.constatado||'')}</textarea></div><div><label>Valor (R$)</label><input type="number" min="0" step="0.01" value="${o.valor||''}" onchange="osF('${o.id}','valor',this.value)"></div></div>`:''}
-  ${pagHtml(o)}<div style="margin-top:8px"><button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="ed" onclick="orcOS('${o.id}')">orçamento</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
-function pagHtml(o){if(o.status!=='Aprovada'&&o.status!=='Baixada')return'';
- const sel=(op,cur,fn,ph)=>`<select onchange="${fn}">${ph?'<option value="">'+ph+'</option>':''}${op.map(([v,l])=>`<option value="${esc(v)}"${String(cur)===String(v)?' selected':''}>${esc(l)}</option>`).join('')}</select>`;
- const nx=(max,cur,fn)=>sel([...Array(max)].map((_,i)=>[i+1,(i+1)+'x']),cur||1,fn);
- const rec=(ch,em,fn)=>`<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" style="width:20px;min-height:20px;height:20px" ${ch?'checked':''} onchange="${fn}">Recebido${ch&&em?' em '+esc(em):''}</label></div>`;
- const BOL=['07','07/28/56','28/56/84','28/56/84/112','07/28/56/84/112'];
- const mo=`<div class="pg"><b>Pagamento mão de obra</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label>${sel([['PIX','PIX'],['Cartão','Cartão']],o.pag,`osPag('${o.id}',this.value)`,'Selecione…')}</div>`
-  +(o.pag==='Cartão'?`<div><label>Parcelas</label>${nx(12,o.parc,`osF('${o.id}','parc',this.value)`)}</div>`:'')
-  +rec(o.recebido,o.recebidoEm,`osRec('${o.id}',this.checked)`)+`</div></div>`;
- const eq=`<div class="pg"><b>Pagamento equipamentos</b><div class="g" style="margin-top:8px"><div><label>Forma de pagamento</label>${sel([['À vista','À vista'],['Cartão','Cartão'],['Boleto','Boleto']],o.pagEq,`osPagEq('${o.id}',this.value)`,'Selecione…')}</div>`
-  +(o.pagEq==='Cartão'?`<div><label>Parcelas (até 3x)</label>${nx(3,o.parcEq,`osF('${o.id}','parcEq',this.value)`)}</div>`:'')
-  +(o.pagEq==='Boleto'?`<div class="w2"><label>Condição do boleto</label>${sel(BOL.map(b=>[b,b+' dias']),o.boleto,`osF('${o.id}','boleto',this.value)`,'Selecione…')}</div>`:'')
-  +rec(o.recebidoEq,o.recebidoEqEm,`osRecEq('${o.id}',this.checked)`)+`</div></div>`;
- const dc=`<div class="pg"><b>Comprovante do pagamento</b><div class="g" style="margin-top:8px"><div><label>Tipo</label>${sel([['Nota fiscal','Nota fiscal'],['Recibo','Recibo']],o.docTipo,`osDoc('${o.id}',this.value)`,'Nenhum')}</div>`
-  +(o.docTipo?`<div><label>Nº da ${o.docTipo==='Recibo'?'recibo':'nota fiscal'}</label><input value="${esc(o.docNum||'')}" placeholder="Opcional" onchange="osF('${o.id}','docNum',this.value)"></div>`:'')+`</div></div>`;
- return mo+eq+dc}
-const hoje=()=>new Date().toLocaleDateString('pt-BR');
-window.osPag=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pag=v;if(v==='Cartão'&&!o.parc)o.parc=1;save();osRender();toast('Pagamento mão de obra: '+(v||'não informado'),'ok')};
-window.osPagEq=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.pagEq=v;if(v==='Cartão'&&!o.parcEq)o.parcEq=1;save();osRender();toast('Pagamento equipamentos: '+(v||'não informado'),'ok')};
-window.osRec=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebido=ch;o.recebidoEm=ch?hoje():'';save();osRender();toast(ch?'Mão de obra recebida.':'Recebimento desmarcado.','ok')};
-window.osDoc=(id,v)=>{const o=DB.os.find(x=>x.id===id);o.docTipo=v;if(!v)o.docNum='';save();osRender();toast(v?'Informe o número (opcional).':'Comprovante removido.','ok')};
-window.osRecEq=(id,ch)=>{const o=DB.os.find(x=>x.id===id);o.recebidoEq=ch;o.recebidoEqEm=ch?hoje():'';save();osRender();toast(ch?'Equipamentos recebidos.':'Recebimento desmarcado.','ok')};
+  <div style="margin-top:10px;max-width:260px"><label>Status</label><select data-f="status" onchange="osUi('${o.id}')">${OSST.map(s=>`<option${s===o.status?' selected':''}>${s}</option>`).join('')}</select></div>
+  <div class="g os-mais" style="margin-top:10px;${mais?'':'display:none'}"><div class="w2"><label>Defeito constatado</label><textarea data-f="constatado">${esc(o.constatado||'')}</textarea></div><div><label>Valor (R$)</label><input data-f="valor" type="number" min="0" step="0.01" value="${o.valor||''}"></div></div>
+  <div class="pg os-pag" style="${mp?'':'display:none'}"><b>Pagamento</b><label style="${lb}"><input type="checkbox" data-f="pago" style="${ck}" ${pg?'checked':''} onchange="osUi('${o.id}')">Pago${pg&&o.pagoEm?' em '+esc(o.pagoEm):''}</label>
+   <div class="g os-doc" style="${pg?'':'display:none'}"><div><label>Comprovante de pagamento</label><select data-f="docTipo" onchange="osUi('${o.id}')"><option value="">Selecione…</option><option${o.docTipo==='Nota fiscal'?' selected':''}>Nota fiscal</option><option${o.docTipo==='Recibo'?' selected':''}>Recibo</option></select></div>
+   <div class="os-docn" style="${pg&&o.docTipo?'':'display:none'}"><label class="os-docl">Nº da ${o.docTipo==='Recibo'?'recibo':'nota fiscal'}</label><input data-f="docNum" value="${esc(o.docNum||'')}" placeholder="Opcional"></div></div></div>
+  <div style="margin-top:8px"><button class="ed" onclick="osSaveCard('${o.id}')">salvar</button> <button class="ed" onclick="osEdit('${o.id}')">editar</button> <button class="ed" onclick="osZapId('${o.id}')">WhatsApp</button> <button class="ed" onclick="orcOS('${o.id}')">orçamento</button> <button class="x" onclick="osDel('${o.id}')">excluir</button></div></div>`}).join('')||'<div class="mu">Nenhuma ordem de serviço ainda.</div>'}
 boot0();
 </script></body></html>

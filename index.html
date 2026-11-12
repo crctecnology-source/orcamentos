@@ -98,15 +98,17 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 </div>
 <div style="margin-top:10px"><label>Descrição dos serviços e materiais solicitados</label><textarea id="o-desc"></textarea></div>
 <h2 style="margin-top:14px">Itens</h2>
+<div><label>Alterar lucro</label><div style="display:flex;gap:22px;flex-wrap:wrap;align-items:center"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:36px"><input type="checkbox" id="l-ind" checked style="width:20px;min-height:20px;height:20px">Individual</label><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:36px"><input type="checkbox" id="l-todos" style="width:20px;min-height:20px;height:20px">Todos</label><div id="l-gw" style="display:none"><label>Lucro (%) em todos os itens</label><input id="g-pct" type="number" step="0.01" placeholder="Ex.: 30" style="max-width:150px"></div></div></div>
 <div class="g">
 <div><label>Tipo</label><select id="i-kind"><option value="s">Serviço</option><option value="p">Produto</option></select></div>
 <div class="w2"><label>Equipamento / serviço</label><select id="i-item"></select></div>
 <div><label>Quantidade</label><input id="i-qtd" type="number" min="1" step="any" value="1"></div>
+<div><label>Lucro (%)</label><input id="i-pct" type="number" step="0.01"></div>
 <div><label>Valor unitário (R$)</label><input id="i-val" type="number" min="0" step="0.01" placeholder="do cadastro"></div>
 </div>
+<div id="i-res" style="margin-top:6px"></div>
 <button class="btn s" id="i-add">+ Adicionar item</button>
-<div class="pg" style="margin-top:12px"><b>Margem de lucro</b><div class="g" style="margin-top:8px"><div><label>Margem (%)</label><input id="m-pct" type="number" step="0.01" placeholder="Ex.: 30"></div><div><label>Aplicar em</label><select id="m-alvo"><option value="t">Todos os itens</option><option value="p">Somente produtos</option><option value="s">Somente serviços</option></select></div><div style="align-self:end"><button class="btn s" id="m-apply" style="margin-top:0">Aplicar margem</button></div></div><div class="mu" style="font-size:12px;margin-top:6px">Calculada sobre o custo, como no cadastro. Para uma margem diferente em um item, ajuste na coluna Margem % da lista. Custo e margem são só para você: o cliente vê apenas o valor de venda.</div></div>
-<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Custo un.</th><th>Margem %</th><th>Venda un.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade, a margem e o valor de venda de cada item direto na lista.</div>
+<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Lucro %</th><th>Valor unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade, o lucro e o valor de cada item direto na lista. Custo e lucro são só para você: o cliente vê apenas o valor de venda.</div>
 <div class="mu" style="text-align:right">Subtotal serviços: <b id="o-ss">R$ 0,00</b></div><div class="mu" style="text-align:right">Subtotal produtos: <b id="o-sp">R$ 0,00</b></div>
 <div class="tot">Total: <span id="o-total">R$ 0,00</span></div>
 <div id="o-res" class="mu" style="text-align:right"></div>
@@ -319,24 +321,31 @@ function fillItems(){const k=$('i-kind').value;
   :DB.prod.map(p=>`<option value="${p.id}">${esc(p.cod?p.cod+' · ':'')}${esc(p.desc)} — ${p.venda?R(p.venda):(p.compra?'custo '+R(p.compra):'valor a definir')}</option>`)).join('')||'<option value="">Nenhum cadastrado</option>';prefill()}
 $('i-kind').onchange=fillItems;
 const custoReg=(k,o)=>(k==='s'?o.custo:o.compra)||0;
-const precoDe=(k,o)=>{const v=(k==='s'?o.final:o.venda)||0;if(v)return v;const c=custoReg(k,o),m=parseFloat($('m-pct').value);return(c>0&&!isNaN(m))?Math.round(c*(1+m/100)*100)/100:0};
+let lucroModo='ind';
+const gPct=()=>{const m=parseFloat($('g-pct').value);return isNaN(m)?null:m};
+const precoDe=(k,o)=>{const c=custoReg(k,o),g=lucroModo==='todos'?gPct():null;if(g!==null&&c>0)return Math.round(c*(1+g/100)*100)/100;return(k==='s'?o.final:o.venda)||0};
+function selItem(){const k=$('i-kind').value;return DB[k==='s'?'serv':'prod'].find(x=>x.id===$('i-item').value)}
+function iRes(){const o=selItem(),k=$('i-kind').value,c=o?custoReg(k,o):0,v=parseFloat($('i-val').value)||0;$('i-res').innerHTML=c>0?'<span class="mu">Custo unit. '+R(c)+'</span>'+(v>0?' · '+tag(c,v):''):(o?'<span class="mu">Item sem custo cadastrado: informe só o valor.</span>':'')}
 $('i-add').onclick=()=>{const k=$('i-kind').value,id=$('i-item').value,q=num('i-qtd');if(!id||q<=0)return;
- const o=DB[k==='s'?'serv':'prod'].find(x=>x.id===id),c=custoReg(k,o),reg=precoDe(k,o),txt=$('i-val').value.trim();let u=txt===''?reg:parseFloat(txt),aviso=false;
- if(txt===''&&!reg){if(c>0){u=c;aviso=true}else return toast('Este item está sem valor nem custo no cadastro. Informe o valor unitário.')}
+ const o=DB[k==='s'?'serv':'prod'].find(x=>x.id===id),c=custoReg(k,o),txt=$('i-val').value.trim();let u=txt===''?precoDe(k,o):parseFloat(txt),aviso=false;
+ if(txt===''&&!u){if(c>0){u=c;aviso=true}else return toast('Este item está sem valor nem custo no cadastro. Informe o valor unitário.')}
  if(!(u>=0))return toast('Valor inválido.');
  itens.push({k,id,nome:k==='s'?o.tipo:o.desc,q,u,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;prefill();renderItens();
- if(aviso)toast('Item adicionado pelo custo (margem 0%). Defina a margem em "Aplicar margem" ou na coluna Margem %.')};
-function precoReg(){const k=$('i-kind').value,o=DB[k==='s'?'serv':'prod'].find(x=>x.id===$('i-item').value);return o?precoDe(k,o):0}
-function prefill(){const p=precoReg();$('i-val').value=p||'';$('i-val').placeholder=p?'':'valor de venda'}
-$('m-pct').oninput=prefill;
-$('m-apply').onclick=()=>{const m=parseFloat($('m-pct').value);if(isNaN(m))return toast('Informe a margem (%).');const al=$('m-alvo').value;let n=0,sem=0;
- itens.forEach(i=>{if(al!=='t'&&i.k!==al)return;const c=itemCusto(i);if(!(c>0)){sem++;return}i.u=Math.round(c*(1+m/100)*100)/100;n++});
- renderItens();toast(n?m+'% aplicado em '+n+' item(ns)'+(sem?'. '+sem+' sem custo cadastrado, mantido(s).':'.'):'Nenhum item com custo cadastrado para aplicar.',n?'ok':undefined)};
+ if(aviso)toast('Item adicionado pelo custo (lucro 0%). Ajuste o Lucro % na lista.')};
+function prefill(){const k=$('i-kind').value,o=selItem(),c=o?custoReg(k,o):0,v=o?precoDe(k,o):0;
+ $('i-val').value=v||'';$('i-val').placeholder=v?'':'valor de venda';$('i-pct').value=(c>0&&v>0)?((v/c-1)*100).toFixed(2):'';iRes()}
+$('i-pct').oninput=()=>{const o=selItem(),c=o?custoReg($('i-kind').value,o):0;if(c>0&&$('i-pct').value!=='')$('i-val').value=(c*(1+num('i-pct')/100)).toFixed(2);iRes()};
+$('i-val').oninput=()=>{const o=selItem(),c=o?custoReg($('i-kind').value,o):0;if(c>0)$('i-pct').value=$('i-val').value!==''?((num('i-val')/c-1)*100).toFixed(2):'';iRes()};
+function lucroUi(m){lucroModo=m;$('l-ind').checked=m==='ind';$('l-todos').checked=m==='todos';$('l-gw').style.display=m==='todos'?'':'none';$('i-pct').disabled=(m==='todos')}
+function lucroSet(m){lucroUi(m);renderItens();prefill()}
+$('l-ind').onchange=()=>lucroSet('ind');
+$('l-todos').onchange=()=>lucroSet($('l-todos').checked?'todos':'ind');
+$('g-pct').oninput=()=>{const m=gPct();if(m!==null)itens.forEach(i=>{const c=itemCusto(i);if(c>0)i.u=Math.round(c*(1+m/100)*100)/100});renderItens();prefill()};
 $('i-item').onchange=prefill;
 window.edItem=(n,f,v)=>{const i=itens[n];
  if(f==='nome'){i.nome=v.trim()||i.nome}else if(f==='m'){const c=itemCusto(i),x=parseFloat(v);if(!(c>0))toast('Este item está sem custo cadastrado.');else if(isNaN(x)||x<=-100)toast('Margem inválida.');else i.u=Math.round(c*(1+x/100)*100)/100}else{const x=parseFloat(v);if(!(x>=0)||(f==='q'&&x<=0))toast(f==='q'?'Quantidade inválida.':'Valor inválido.');else i[f]=x}
  renderItens()};
-function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>{const c=itemCusto(i),m=c>0?((i.u/c-1)*100).toFixed(2):'';return`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td class="mu">${c>0?R(c):'sem custo'}</td><td><input type="number" step="0.01" value="${m}" ${c>0?'':'disabled'} onchange="edItem(${n},'m',this.value)" style="width:92px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`}).join('')||'<tr><td colspan="8" class="mu">Nenhum item adicionado.</td></tr>';
+function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>{const c=itemCusto(i),m=c>0?((i.u/c-1)*100).toFixed(2):'';return`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"><div style="font-size:12px;margin-top:4px">${c>0?'<span class="mu">Custo unit. '+R(c)+'</span> · '+tag(c,i.u):'<span class="mu">Sem custo cadastrado</span>'}</div></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" step="0.01" value="${m}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'m',this.value)" style="width:92px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`}).join('')||'<tr><td colspan="7" class="mu">Nenhum item adicionado.</td></tr>';
  const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-ss').textContent=R(itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0));$('o-sp').textContent=R(itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0));pvPay();$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
 $('o-save').onclick=()=>{const num=$('o-num').value.trim();if(!editId&&!num)return toast('Informe o número do orçamento.');
  if(num&&DB.orc.some(x=>x.id!==editId&&x.num===num&&x.ano===oAno))return toast('Já existe o orçamento nº '+num+'/'+oAno+'.');
@@ -545,11 +554,11 @@ $('f-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carrega
  d.rows.forEach((r,ri)=>{d.m.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='#,##0.00'});d.pc.forEach(i=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:i})];if(c)c.z='0.0"%"'})});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Financeiro');XLSX.writeFile(wb,'financeiro.xlsx')};
 let editId=null;
-function cancelEdit(){editId=null;$('m-pct').value='';distSet('');$('o-doct').value='';$('o-docn').value='';docShow();$('o-num').value='';setAno(new Date().getFullYear());itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('i-qtd').value='1';$('i-val').value='';fillItems();renderItens();$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
+function cancelEdit(){editId=null;$('g-pct').value='';lucroUi('ind');distSet('');$('o-doct').value='';$('o-docn').value='';docShow();$('o-num').value='';setAno(new Date().getFullYear());itens=[];$('o-desc').value='';$('o-cli').value='';$('o-tipo').value='Serviço';setCond({});$('i-qtd').value='1';$('i-val').value='';fillItems();renderItens();$('o-save').textContent='Salvar orçamento';$('o-cancel').style.display='none'}
 $('o-cancel').onclick=()=>{cancelEdit();renderItens()};
 window.editOrc=async(id,skip)=>{const o=DB.orc.find(x=>x.id===id);
  if(o.status==='Aprovado'&&!skip&&!await ask('Editar o orçamento nº '+nOrc(o)+'?','Ele já foi aprovado. Se você mudar itens, valores, cliente ou condições, o estoque é devolvido e ele volta para Pendente, para ser aprovado de novo. Se mudar só o número, a nota fiscal ou o recibo, nada disso acontece. Pagamentos já registrados são mantidos.','Editar'))return;
- editId=id;itens=o.itens.map(i=>({...i}));$('o-num').value=o.num||'';setAno(o.ano||new Date().getFullYear());$('o-doct').value=o.docTipo||'';$('o-docn').value=o.docNum||'';docShow();distSet(o.distrib);
+ editId=id;itens=o.itens.map(i=>({...i}));$('g-pct').value='';lucroUi('ind');$('o-num').value=o.num||'';setAno(o.ano||new Date().getFullYear());$('o-doct').value=o.docTipo||'';$('o-docn').value=o.docNum||'';docShow();distSet(o.distrib);
  $('o-tipo').value=o.tipo;$('o-desc').value=o.desc;setCond(o.cond||{});
  const c=DB.cli.find(x=>x.nome===o.cli);$('o-cli').value=c?c.id:'';
  $('o-save').textContent='Salvar alterações (nº '+nOrc(o)+')';$('o-cancel').style.display='';renderItens();editSnap=snap();window.scrollTo(0,0)};

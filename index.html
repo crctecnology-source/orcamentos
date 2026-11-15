@@ -225,15 +225,21 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="w2"><label>Descrição</label><input id="d-desc"></div>
 <div><label>Categoria</label><select id="d-cat"></select></div>
 <div><label>Fornecedor</label><input id="d-forn"></div>
-<div><label>Valor (R$)</label><input id="d-valor" type="number" step="0.01" min="0"></div>
-<div><label>Forma de pagamento</label><select id="d-forma"><option>PIX</option><option>Dinheiro</option><option>Cartão</option><option>Boleto</option><option>Transferência</option></select></div>
-<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" id="d-pago" checked style="width:20px;min-height:20px;height:20px">Paga</label></div></div>
+<div><label id="d-vl">Valor (R$)</label><input id="d-valor" type="number" step="0.01" min="0"></div>
+<div><label>Forma de pagamento</label><select id="d-forma"><option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Débito">Débito</option><option value="Cartão">Cartão de crédito</option><option value="Boleto">Boleto</option><option value="Transferência">Transferência</option></select></div>
+<div style="align-self:end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px"><input type="checkbox" id="d-pago" checked style="width:20px;min-height:20px;height:20px">Paga</label></div>
+<div id="d-bw" style="display:none"><label>Banco / cartão</label><input id="d-banco" placeholder="Ex.: Nubank, Itaú"></div>
+<div id="d-fw" style="display:none"><label>Final do cartão (4 dígitos)</label><input id="d-final" inputmode="numeric" maxlength="4" placeholder="1234"></div>
+<div id="d-pw" style="display:none"><label>Parcelas (até 12x)</label><select id="d-parc"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option></select></div>
+<div id="d-vw" style="display:none"><label>Vencimento da 1ª parcela</label><input id="d-venc" type="date"></div></div>
+<div id="d-prev" class="mu" style="margin-top:6px"></div>
 <div class="g" style="margin-top:8px"><div><label>Nova categoria</label><input id="d-newcat" placeholder="Ex.: Uniformes"></div><div style="align-self:end"><button class="btn s" id="d-addcat" style="margin-top:0">Adicionar categoria</button></div></div>
 <div id="d-cats" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"></div>
 <button class="btn" id="d-save">Salvar despesa</button> <button class="btn s" id="d-cancel" style="display:none">Cancelar edição</button></div>
 <div class="card"><h2>Despesas lançadas</h2><div class="g"><div><label>De</label><input id="d-fde" type="date"></div><div><label>Até</label><input id="d-fate" type="date"></div><div><label>Categoria</label><select id="d-fcat"></select></div><div><label>Situação</label><select id="d-fsit"><option value="">Todas</option><option>Paga</option><option>A pagar</option></select></div></div>
 <div class="g" id="d-cards" style="margin-top:12px"></div>
-<button class="btn" id="d-pdf">Gerar PDF</button> <button class="btn s" id="d-xls">Gerar Excel</button>
+<div style="margin-top:10px"><b style="font-size:13px">Provisão: a pagar por mês</b><div id="d-prov" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"></div></div>
+<button class="btn" id="d-pdf" style="margin-top:12px">Gerar PDF</button> <button class="btn s" id="d-xls">Gerar Excel</button>
 <input class="q" data-t="#d-list tr" placeholder="Buscar despesa por descrição, fornecedor ou categoria…"><div class="tw"><table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Fornecedor</th><th>Forma</th><th>Valor</th><th>Situação</th><th></th></tr></thead><tbody id="d-list"></tbody></table></div></div></section>
 <section id="s-graf"><div class="card"><h2>Gráficos</h2><div class="mu">Considera orçamentos aprovados e ordens de serviço baixadas ou pagas, como nas Finanças. Os gráficos de status mostram todos os lançamentos do período.</div>
 <div class="g" style="margin-top:8px"><div><label>Origem</label><select id="g-org"><option value="todos">Todos (orçamentos, OS e despesas)</option><option value="orc">Só orçamentos</option><option value="os">Só ordens de serviço</option></select></div><div><label>De</label><input id="g-de" type="date"></div><div><label>Até</label><input id="g-ate" type="date"></div></div>
@@ -616,30 +622,56 @@ const dCats=()=>{if(!DB.cats||!DB.cats.length)DB.cats=CATS0.slice();return DB.ca
 const isoBr=s=>s?String(s).split('-').reverse().join('/'):'';
 const z2=n=>String(n).padStart(2,'0');
 const hojeIso=()=>{const d=new Date();return d.getFullYear()+'-'+z2(d.getMonth()+1)+'-'+z2(d.getDate())};
+const despForma=x=>[x.forma==='Cartão'?'Cartão'+(x.np>1?' '+x.p+'/'+x.np:''):x.forma,x.banco,x.final?'••'+x.final:''].filter(Boolean).join(' · ');
+let vencManual=false;
+const addMes=(iso,n)=>{const [y,m,d]=iso.split('-').map(Number),b=new Date(y,m-1+n,1),dim=new Date(b.getFullYear(),b.getMonth()+1,0).getDate();return b.getFullYear()+'-'+z2(b.getMonth()+1)+'-'+z2(Math.min(d,dim))};
+function despParcelas(tot,n,venc){const cents=Math.round(tot*100),base=Math.floor(cents/n),out=[];let acc=0;for(let i=0;i<n;i++){const v=i<n-1?base:cents-acc;acc+=base;out.push({v:v/100,dt:addMes(venc,i)})}return out}
+function despPrev(){const cred=$('d-forma').value==='Cartão'&&!$('d-id').value,tot=parseFloat($('d-valor').value)||0,n=+$('d-parc').value||1,venc=$('d-venc').value;
+ if(cred&&tot>0&&venc){const L=despParcelas(tot,n,venc);$('d-prev').innerHTML='<b>'+n+'x</b> de '+R(L[0].v)+' — vencimentos: '+L.map(x=>isoBr(x.dt)).join(', ')+'. As parcelas entram nas despesas como "A pagar".'}
+ else if($('d-id').value){const x=(DB.desp||[]).find(y=>y.id===$('d-id').value);$('d-prev').textContent=x&&x.np>1?'Esta é a parcela '+x.p+'/'+x.np+'. A alteração vale só para ela.':''}
+ else $('d-prev').textContent=''}
+function despForm(){const f=$('d-forma').value,cred=f==='Cartão',deb=f==='Débito',edit=!!$('d-id').value;
+ $('d-bw').style.display=$('d-fw').style.display=(cred||deb)?'':'none';$('d-pw').style.display=$('d-vw').style.display=(cred&&!edit)?'':'none';$('d-vl').textContent=(cred&&!edit)?'Valor total (R$)':'Valor (R$)';
+ if(cred&&!edit){$('d-pago').checked=false;$('d-pago').disabled=true}else{if($('d-pago').disabled)$('d-pago').checked=true;$('d-pago').disabled=false}
+ if(cred&&!edit&&!vencManual&&$('d-data').value)$('d-venc').value=addMes($('d-data').value,1);despPrev()}
 function despLista(){const de=$('d-fde').value,ate=$('d-fate').value,cat=$('d-fcat').value,sit=$('d-fsit').value;
  return(DB.desp||[]).filter(x=>(!de||x.data>=de)&&(!ate||x.data<=ate)&&(!cat||x.cat===cat)&&(!sit||(sit==='Paga'?x.pago:!x.pago))).sort((a,b)=>b.data.localeCompare(a.data))}
-function despLimpa(){['d-id','d-desc','d-forn','d-valor'].forEach(i=>$(i).value='');$('d-data').value=hojeIso();$('d-pago').checked=true;$('d-forma').value='PIX';
- $('d-h').textContent='Nova despesa';$('d-save').textContent='Salvar despesa';$('d-cancel').style.display='none'}
+function despLimpa(){['d-id','d-desc','d-forn','d-valor','d-banco','d-final','d-venc'].forEach(i=>$(i).value='');$('d-data').value=hojeIso();$('d-pago').checked=true;$('d-pago').disabled=false;$('d-forma').value='PIX';$('d-parc').value='1';vencManual=false;
+ $('d-h').textContent='Nova despesa';$('d-save').textContent='Salvar despesa';$('d-cancel').style.display='none';despForm()}
 function despRender(){DB.desp=DB.desp||[];const L=dCats(),sel=(id,extra)=>{const cur=$(id).value;$(id).innerHTML=(extra||'')+L.map(c=>'<option>'+esc(c)+'</option>').join('');if([...$(id).options].some(o=>o.value===cur))$(id).value=cur};
  sel('d-cat');sel('d-fcat','<option value="">Todas</option>');
  $('d-cats').innerHTML=L.map(c=>'<span class="bd" style="display:inline-flex;gap:6px;align-items:center">'+esc(c)+' <a href="#" style="text-decoration:none;color:inherit" title="Remover categoria" onclick="despDelCat(\''+esc(c).replace(/'/g,"\\'")+'\');return false">×</a></span>').join('');
  const l=despLista(),tot=l.reduce((a,x)=>a+x.valor,0),pg=l.filter(x=>x.pago).reduce((a,x)=>a+x.valor,0),box=(t,v)=>`<div style="border:1px solid var(--bd);border-radius:8px;padding:10px"><div class="mu">${t}</div><b style="font-size:17px">${v}</b></div>`;
  $('d-cards').innerHTML=box('Total de despesas',R(tot))+box('Pagas',R(pg))+box('A pagar',R(tot-pg))+box('Lançamentos',l.length);
- $('d-list').innerHTML=l.map(x=>`<tr><td>${isoBr(x.data)}</td><td>${esc(x.desc)}</td><td>${esc(x.cat)}</td><td>${esc(x.forn||'')}</td><td>${esc(x.forma||'')}</td><td>${R(x.valor)}</td><td><span class="bd ${x.pago?'ok':'low'}">${x.pago?'Paga':'A pagar'}</span></td><td><button class="ed" onclick="despEd('${x.id}')">editar</button> <button class="x" onclick="despDel('${x.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhuma despesa no período.</td></tr>'}
+ {const hj=hojeIso(),m0=hj.slice(0,7),ap=(DB.desp||[]).filter(x=>!x.pago),ven=ap.filter(x=>x.data<hj).reduce((a,x)=>a+x.valor,0),mm=new Map();ap.filter(x=>x.data>=hj&&x.data.slice(0,7)>=m0).forEach(x=>mm.set(x.data.slice(0,7),(mm.get(x.data.slice(0,7))||0)+x.valor));
+  const chip=(a,b,c)=>`<span class="bd ${c||''}" style="padding:6px 10px">${a}: <b>${b}</b></span>`;
+  $('d-prov').innerHTML=(ven>0?chip('Vencidas',R(ven),'low'):'')+[...mm.entries()].sort().map(([k,v])=>chip(k.slice(5)+'/'+k.slice(0,4),R(v))).join('')||'<span class="mu">Nenhuma despesa a pagar nos próximos meses.</span>'}
+ $('d-list').innerHTML=l.map(x=>`<tr><td>${isoBr(x.data)}</td><td>${esc(x.desc)}</td><td>${esc(x.cat)}</td><td>${esc(x.forn||'')}</td><td>${esc(despForma(x))}</td><td>${R(x.valor)}</td><td><span class="bd ${x.pago?'ok':'low'}">${x.pago?'Paga':'A pagar'}</span></td><td><button class="ed" onclick="despPaga('${x.id}')">${x.pago?'desfazer pgto':'marcar paga'}</button> <button class="ed" onclick="despEd('${x.id}')">editar</button> <button class="x" onclick="despDel('${x.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhuma despesa no período.</td></tr>'}
 ['d-fde','d-fate','d-fcat','d-fsit'].forEach(i=>$(i).onchange=despRender);
-$('d-save').onclick=()=>{const data=$('d-data').value,desc=$('d-desc').value.trim(),valor=parseFloat($('d-valor').value),cat=$('d-cat').value;
+$('d-save').onclick=()=>{const data=$('d-data').value,desc=$('d-desc').value.trim(),valor=parseFloat($('d-valor').value),cat=$('d-cat').value,f=$('d-forma').value,card=f==='Cartão'||f==='Débito',banco=$('d-banco').value.trim(),fin=$('d-final').value.replace(/\D/g,'');
  if(!data)return toast('Informe a data.');if(!desc)return toast('Informe a descrição.');if(!cat)return toast('Escolha a categoria.');if(!(valor>0))return toast('Informe o valor.');
- DB.desp=DB.desp||[];const id=$('d-id').value,d={data,desc,cat,forn:$('d-forn').value.trim(),valor,forma:$('d-forma').value,pago:$('d-pago').checked};
- if(id){Object.assign(DB.desp.find(x=>x.id===id),d)}else DB.desp.push({id:uid(),...d});
- save();despLimpa();render();window.scrollTo(0,0);toast(id?'Despesa atualizada.':'Despesa salva.','ok')};
+ if(card&&!banco)return toast('Informe o banco do cartão.');if(fin&&fin.length!==4)return toast('O final do cartão precisa ter 4 dígitos.');
+ DB.desp=DB.desp||[];const id=$('d-id').value,base={cat,forn:$('d-forn').value.trim(),forma:f,banco:card?banco:'',final:card?fin:'',pago:$('d-pago').checked};let msg='Despesa salva.';
+ if(id){Object.assign(DB.desp.find(x=>x.id===id),{desc,data,valor,...base});msg='Despesa atualizada.'}
+ else if(f==='Cartão'){const n=+$('d-parc').value||1,venc=$('d-venc').value||addMes(data,1),g=uid(),L=despParcelas(valor,n,venc);
+  L.forEach((pp,i)=>DB.desp.push({id:uid(),grupo:g,p:i+1,np:n,...base,pago:false,desc:n>1?desc+' ('+(i+1)+'/'+n+')':desc,data:pp.dt,valor:pp.v}));msg=n>1?n+' parcelas lançadas nos próximos meses.':'Despesa lançada no vencimento.'}
+ else DB.desp.push({id:uid(),desc,data,valor,...base});
+ save();despLimpa();render();window.scrollTo(0,0);toast(msg,'ok')};
+['d-forma','d-parc','d-valor','d-venc'].forEach(i=>$(i).addEventListener('input',()=>{if(i==='d-venc')vencManual=true;despForm()}));
+$('d-forma').addEventListener('change',despForm);$('d-data').addEventListener('input',despForm);
+$('d-final').addEventListener('input',()=>{$('d-final').value=$('d-final').value.replace(/\D/g,'').slice(0,4)});
 $('d-cancel').onclick=()=>{despLimpa()};
-window.despEd=id=>{const x=(DB.desp||[]).find(y=>y.id===id);if(!x)return;$('d-id').value=x.id;$('d-data').value=x.data;$('d-desc').value=x.desc;$('d-cat').value=x.cat;$('d-forn').value=x.forn||'';$('d-valor').value=x.valor;$('d-forma').value=x.forma||'PIX';$('d-pago').checked=!!x.pago;
+window.despEd=id=>{const x=(DB.desp||[]).find(y=>y.id===id);if(!x)return;$('d-id').value=x.id;$('d-data').value=x.data;$('d-desc').value=x.desc;$('d-cat').value=x.cat;$('d-forn').value=x.forn||'';$('d-valor').value=x.valor;$('d-forma').value=x.forma||'PIX';$('d-banco').value=x.banco||'';$('d-final').value=x.final||'';$('d-pago').checked=!!x.pago;despForm();$('d-pago').checked=!!x.pago;
  $('d-h').textContent='Editar despesa';$('d-save').textContent='Salvar alterações';$('d-cancel').style.display='';window.scrollTo(0,0)};
-window.despDel=async id=>{const x=(DB.desp||[]).find(y=>y.id===id);if(!x)return;if(!await ask('Excluir esta despesa?',x.desc+' · '+R(x.valor),'Excluir',true))return;DB.desp=DB.desp.filter(y=>y.id!==id);save();render();toast('Despesa excluída.','ok')};
+window.despPaga=id=>{const x=(DB.desp||[]).find(y=>y.id===id);if(!x)return;x.pago=!x.pago;save();render();toast(x.pago?'Despesa marcada como paga.':'Pagamento desfeito.','ok')};
+window.despDel=async id=>{const x=(DB.desp||[]).find(y=>y.id===id);if(!x)return;const irm=x.grupo?DB.desp.filter(y=>y.grupo===x.grupo):[];
+ if(irm.length>1){const r=await dlgShow('<h2>Excluir parcela</h2><p class="mu" style="font-size:14px">'+esc(x.desc)+' · '+R(x.valor)+'<br>Esta compra tem '+irm.length+' parcelas lançadas.</p>',[['Cancelar','s',false],['Só esta parcela','','one'],['Todas as parcelas','dgr','all']]);if(!r)return;DB.desp=DB.desp.filter(y=>r==='all'?y.grupo!==x.grupo:y.id!==id)}
+ else{if(!await ask('Excluir esta despesa?',x.desc+' · '+R(x.valor),'Excluir',true))return;DB.desp=DB.desp.filter(y=>y.id!==id)}
+ save();render();toast('Despesa excluída.','ok')};
 $('d-addcat').onclick=()=>{const n=$('d-newcat').value.trim();if(!n)return toast('Digite o nome da categoria.');const L=dCats();if(L.some(c=>c.toLowerCase()===n.toLowerCase()))return toast('Essa categoria já existe.');L.push(n);L.sort((a,b)=>a.localeCompare(b,'pt-BR'));save();$('d-newcat').value='';despRender();$('d-cat').value=n;toast('Categoria adicionada.','ok')};
 window.despDelCat=async c=>{if((DB.desp||[]).some(x=>x.cat===c))return toast('Há despesas nessa categoria. Mude as despesas antes de remover.');if(!await ask('Remover a categoria "'+c+'"?','','Remover',true))return;DB.cats=dCats().filter(x=>x!==c);save();despRender()};
 function despData(){const l=despLista(),tot=l.reduce((a,x)=>a+x.valor,0),pg=l.filter(x=>x.pago).reduce((a,x)=>a+x.valor,0);
- return{titulo:'Despesas da empresa',cols:['Data','Descrição','Categoria','Fornecedor','Forma','Valor','Situação'],rows:l.map(x=>[isoBr(x.data),x.desc,x.cat,x.forn||'',x.forma||'',x.valor,x.pago?'Paga':'A pagar']),m:[5],pc:[],tot:'Total: '+R2(tot)+' · Pagas: '+R2(pg)+' · A pagar: '+R2(tot-pg)+' · '+l.length+' lançamento(s)',total:tot,pagas:pg}}
+ return{titulo:'Despesas da empresa',cols:['Data','Descrição','Categoria','Fornecedor','Forma','Valor','Situação'],rows:l.map(x=>[isoBr(x.data),x.desc,x.cat,x.forn||'',despForma(x),x.valor,x.pago?'Paga':'A pagar']),m:[5],pc:[],tot:'Total: '+R2(tot)+' · Pagas: '+R2(pg)+' · A pagar: '+R2(tot-pg)+' · '+l.length+' lançamento(s)',total:tot,pagas:pg}}
 $('d-pdf').onclick=()=>{if(!window.jspdf)return toast('Não foi possível carregar o gerador de PDF.');relPdf(despData()).save('despesas.pdf')};
 $('d-xls').onclick=()=>{if(!window.XLSX)return toast('Não foi possível carregar o gerador de Excel.');const d=despData(),ws=XLSX.utils.aoa_to_sheet([d.cols,...d.rows,[],['Total',d.total],['Pagas',d.pagas],['A pagar',d.total-d.pagas]]);
  d.rows.forEach((r,ri)=>{const c=ws[XLSX.utils.encode_cell({r:ri+1,c:5})];if(c)c.z='#,##0.00'});const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Despesas');XLSX.writeFile(wb,'despesas.xlsx')};

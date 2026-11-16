@@ -95,7 +95,7 @@ function show(o){applyTheme((o.empresa||{}).cor);
     <div class="mu">${esc(o.data)} · Cliente: ${esc(o.cliente)}${o.contato?' (A/C '+esc(o.contato)+')':''}</div>
     ${o.descricao?'<p>'+esc(o.descricao)+'</p>':''}
     <table><thead><tr><th>Item</th><th class="r">Qtd</th><th class="r">Unit.</th><th class="r">Total</th></tr></thead><tbody>
-    ${(o.itens||[]).map(i=>`<tr><td>${esc(i.nome)}</td><td class="r">${esc(i.q)}</td><td class="r">${R(i.u)}</td><td class="r">${R(i.q*i.u)}</td></tr>`).join('')}
+    ${(o.itens||[]).map(i=>`<tr><td>${i.cod?esc(i.cod)+' · ':''}${esc(i.nome)}</td><td class="r">${esc(i.q)}</td><td class="r">${R(i.u)}</td><td class="r">${R(i.q*i.u)}</td></tr>`).join('')}
     </tbody></table>
     <div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div>${L.length?'<div style="margin-top:12px;font-size:13px"><b>Condições</b><br>'+L.map(esc).join('<br>')+'</div>':''}</div>
   ${aberto?`<div class="card"><b>Sua resposta</b>

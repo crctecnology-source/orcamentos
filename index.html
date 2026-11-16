@@ -97,7 +97,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="g">
 <div><label>Tipo de orçamento</label><select id="o-tipo"><option>Serviço</option><option>Produto</option><option>Produto e serviço</option></select></div>
 <div><label>Nº do orçamento</label><div style="display:flex;align-items:center;gap:6px"><input id="o-num" inputmode="numeric" placeholder="Ex.: 123" style="max-width:130px"><b id="o-ano" style="font-size:16px"></b></div></div>
-<div class="w2"><label>Cliente</label><select id="o-cli"></select></div>
+<div class="w2"><label>Cliente</label><input id="o-cq" placeholder="Buscar por razão social, nome fantasia ou apelido" style="margin-bottom:6px"><select id="o-cli"></select><div id="o-ficha"></div></div>
 </div>
 <div style="margin-top:10px"><label>Descrição dos serviços e materiais solicitados</label><textarea id="o-desc"></textarea></div>
 <h2 style="margin-top:14px">Itens</h2>
@@ -112,7 +112,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 </div>
 <div id="i-res" style="margin-top:6px"></div>
 <button class="btn s" id="i-add">+ Adicionar item</button>
-<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Item</th><th>Qtd</th><th>Markup %</th><th>Margem %</th><th>Valor unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade, o markup, a margem e o valor de cada item direto na lista. Custo e lucro são só para você: o cliente vê apenas o valor de venda.</div>
+<div class="tw" style="margin-top:10px"><table><thead><tr><th>Tipo</th><th>Cód.</th><th>Item</th><th>Qtd</th><th>Markup %</th><th>Margem %</th><th>Valor unit.</th><th>Total</th><th></th></tr></thead><tbody id="o-itens"></tbody></table></div><div class="mu" style="margin-top:6px">Você pode editar a descrição, a quantidade, o markup, a margem e o valor de cada item direto na lista. Custo e lucro são só para você: o cliente vê apenas o valor de venda.</div>
 <div class="mu" style="text-align:right">Subtotal serviços: <b id="o-ss">R$ 0,00</b></div><div class="mu" style="text-align:right">Subtotal produtos: <b id="o-sp">R$ 0,00</b></div>
 <div class="tot">Total: <span id="o-total">R$ 0,00</span></div>
 <div id="o-res" class="mu" style="text-align:right"></div>
@@ -140,7 +140,9 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="card"><h2>Cadastro de clientes</h2>
 <input type="hidden" id="c-id">
 <div class="g">
-<div class="w2"><label>Nome do cliente</label><input id="c-nome"></div>
+<div class="w2"><label>Razão social</label><input id="c-nome"></div>
+<div class="w2"><label>Nome fantasia</label><input id="c-fant"></div>
+<div><label>Apelido</label><input id="c-apel"></div>
 <div><label>Nome do contato</label><input id="c-contato"></div>
 <div><label>CNPJ ou CPF</label><input id="c-doc"></div>
 <div><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="(11) 90000-0000"></div>
@@ -156,14 +158,15 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div id="c-msg" class="mu"></div>
 <button class="btn" id="c-save">Salvar cliente</button>
 </div>
-<div class="card"><input class="q" data-t="#c-list tr" placeholder="Buscar cliente por nome, CNPJ, telefone…"><div class="tw"><table><thead><tr><th>Nome</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
+<div class="card"><input class="q" data-t="#c-list tr" placeholder="Buscar cliente por razão social, fantasia, apelido, CNPJ, telefone…"><div class="tw"><table><thead><tr><th>Razão social</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
 </section>
 
 <section id="s-prod">
 <div class="card"><h2>Cadastro de produtos</h2>
 <input type="hidden" id="p-id">
 <div class="g">
-<div class="w2"><label>Descrição</label><input id="p-desc"></div>
+<div class="w2"><label>Produto</label><input id="p-desc"></div>
+<div class="w2"><label>Descrição (é o que aparece no orçamento)</label><input id="p-descr"></div>
 <div><label>Código do produto</label><input id="p-cod"></div>
 <div><label>Valor de compra (R$)</label><input id="p-compra" type="number" step="0.01" min="0"></div>
 <div><label>Markup (%)</label><input id="p-pct" type="number" step="0.01"></div>
@@ -176,7 +179,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div id="p-res" style="margin-top:6px"></div>
 <button class="btn" id="p-save">Salvar produto</button>
 </div>
-<div class="card"><h2>Estoque</h2><input class="q" data-t="#p-list tr" placeholder="Buscar produto por descrição ou código…"><div class="tw"><table><thead><tr><th>Código</th><th>Descrição</th><th>Compra</th><th>Venda</th><th>Markup %</th><th>Resultado</th><th>Estoque</th><th></th></tr></thead><tbody id="p-list"></tbody></table></div></div>
+<div class="card"><h2>Estoque</h2><input class="q" data-t="#p-list tr" placeholder="Buscar produto por nome, descrição ou código…"><div class="tw"><table><thead><tr><th>Código</th><th>Produto</th><th>Descrição</th><th>Compra</th><th>Venda</th><th>Markup %</th><th>Resultado</th><th>Estoque</th><th></th></tr></thead><tbody id="p-list"></tbody></table></div></div>
 </section>
 
 <section id="s-serv">
@@ -199,7 +202,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <section id="s-os"><div class="card"><h2 id="os-h">Nova ordem de serviço</h2>
 <div class="mu" id="os-num" style="margin:-6px 0 12px"></div>
 <div class="g">
-<div class="w2"><label>Cliente</label><select id="os-cli"></select></div>
+<div class="w2"><label>Cliente</label><input id="os-cq" placeholder="Buscar por razão social, nome fantasia ou apelido" style="margin-bottom:6px"><select id="os-cli"></select><div id="os-ficha"></div></div>
 <div><label>Equipamento</label><input id="os-eq"></div>
 <div><label>Marca</label><input id="os-marca"></div>
 <div><label>Modelo</label><input id="os-modelo"></div>
@@ -321,15 +324,15 @@ async function buscaCep(c){
 // salvar cadastros
 function upsert(list,obj){const i=DB[list].findIndex(x=>x.id===obj.id);i>=0?DB[list][i]=obj:DB[list].push(obj);save();toast(i>=0?'Alterações salvas.':'Cadastro salvo.','ok')}
 function clear(ids){ids.forEach(i=>$(i).value='')}
-$('c-save').onclick=()=>{if(!$('c-nome').value.trim())return toast('Informe o nome do cliente.');
- upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
- clear(['c-id','c-nome','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);$('c-msg').textContent='';render();window.scrollTo(0,0);toast('Cliente salvo.','ok')};
+$('c-save').onclick=()=>{if(!$('c-nome').value.trim())return toast('Informe a razão social.');
+ upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),fant:$('c-fant').value.trim(),apel:$('c-apel').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
+ clear(['c-id','c-nome','c-fant','c-apel','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);$('c-msg').textContent='';render();window.scrollTo(0,0);toast('Cliente salvo.','ok')};
 const nk=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
-$('p-save').onclick=()=>{if(!$('p-desc').value.trim())return toast('Informe a descrição.');
+$('p-save').onclick=()=>{if(!$('p-desc').value.trim())return toast('Informe o produto.');
  {const id=$('p-id').value,cd=nk($('p-cod').value),ds=nk($('p-desc').value),d1=cd&&DB.prod.find(x=>x.id!==id&&nk(x.cod)===cd),d2=DB.prod.find(x=>x.id!==id&&nk(x.desc)===ds);
-  if(d1)return toast('Já existe um produto com este código: '+d1.desc+'.');if(d2)return toast('Já existe um produto com esta descrição'+(d2.cod?' (código '+d2.cod+')':'')+'.')}
- upsert('prod',{id:$('p-id').value||uid(),desc:$('p-desc').value.trim(),cod:$('p-cod').value,compra:num('p-compra'),venda:num('p-venda'),qtd:num('p-qtd'),min:num('p-min')});
- clear(['p-id','p-desc','p-cod','p-compra','p-pct','p-mar','p-venda','p-qtd','p-min']);render();window.scrollTo(0,0);toast('Produto salvo.','ok')};
+  if(d1)return toast('Já existe um produto com este código: '+d1.desc+'.');if(d2)return toast('Já existe um produto com este nome'+(d2.cod?' (código '+d2.cod+')':'')+'.')}
+ upsert('prod',{id:$('p-id').value||uid(),desc:$('p-desc').value.trim(),descr:$('p-descr').value.trim(),cod:$('p-cod').value,compra:num('p-compra'),venda:num('p-venda'),qtd:num('p-qtd'),min:num('p-min')});
+ clear(['p-id','p-desc','p-descr','p-cod','p-compra','p-pct','p-mar','p-venda','p-qtd','p-min']);render();window.scrollTo(0,0);toast('Produto salvo.','ok')};
 $('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return toast('Informe o tipo de serviço.');
  {const id=$('v-id').value,cd=nk($('v-cod').value),ds=nk($('v-tipo').value),d1=cd&&DB.serv.find(x=>x.id!==id&&nk(x.cod)===cd),d2=DB.serv.find(x=>x.id!==id&&nk(x.tipo)===ds);
   if(d1)return toast('Já existe um serviço com este código: '+d1.tipo+'.');if(d2)return toast('Já existe um serviço com esta descrição'+(d2.cod?' (código '+d2.cod+')':'')+'.')}
@@ -338,8 +341,8 @@ $('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return toast('Informe o ti
 
 // editar / excluir
 window.edit=(l,id)=>{const o=DB[l].find(x=>x.id===id);
- const m={cli:{id:'c-id',nome:'c-nome',contato:'c-contato',doc:'c-doc',cep:'c-cep',rua:'c-rua',bai:'c-bai',cid:'c-cid',uf:'c-uf',num:'c-num',comp:'c-comp',tel:'c-tel',email:'c-email'},
-  prod:{id:'p-id',desc:'p-desc',cod:'p-cod',compra:'p-compra',venda:'p-venda',qtd:'p-qtd',min:'p-min'},
+ const m={cli:{id:'c-id',nome:'c-nome',fant:'c-fant',apel:'c-apel',contato:'c-contato',doc:'c-doc',cep:'c-cep',rua:'c-rua',bai:'c-bai',cid:'c-cid',uf:'c-uf',num:'c-num',comp:'c-comp',tel:'c-tel',email:'c-email'},
+  prod:{id:'p-id',desc:'p-desc',descr:'p-descr',cod:'p-cod',compra:'p-compra',venda:'p-venda',qtd:'p-qtd',min:'p-min'},
   serv:{id:'v-id',tipo:'v-tipo',cod:'v-cod',custo:'v-custo',final:'v-final'}}[l];
  for(const k in m)$(m[k]).value=o[k]??'';
  if(l==='prod')$('p-venda').oninput();if(l==='serv')$('v-final').oninput();upd();window.scrollTo(0,0)};
@@ -351,7 +354,7 @@ const tag=(c,v)=>{const l=v-c;return `<span class="${l<0?'low':l>0?'ok':'mu'}">$
 // orçamento
 function fillItems(){const k=$('i-kind').value;
  $('i-item').innerHTML=(k==='s'?DB.serv.map(s=>`<option value="${s.id}">${esc(s.cod?s.cod+' · ':'')}${esc(s.tipo)} — ${s.final?R(s.final):(s.custo?'custo '+R(s.custo):'valor a definir')}</option>`)
-  :DB.prod.map(p=>`<option value="${p.id}">${esc(p.cod?p.cod+' · ':'')}${esc(p.desc)} — ${p.venda?R(p.venda):(p.compra?'custo '+R(p.compra):'valor a definir')}</option>`)).join('')||'<option value="">Nenhum cadastrado</option>';prefill()}
+  :DB.prod.map(p=>`<option value="${p.id}">${esc(p.cod?p.cod+' · ':'')}${esc(p.descr||p.desc)} — ${p.venda?R(p.venda):(p.compra?'custo '+R(p.compra):'valor a definir')}</option>`)).join('')||'<option value="">Nenhum cadastrado</option>';prefill()}
 $('i-kind').onchange=fillItems;
 const custoReg=(k,o)=>(k==='s'?o.custo:o.compra)||0;
 let lucroModo='ind';
@@ -364,7 +367,7 @@ $('i-add').onclick=()=>{const k=$('i-kind').value,id=$('i-item').value,q=num('i-
  const o=DB[k==='s'?'serv':'prod'].find(x=>x.id===id),c=custoReg(k,o),txt=$('i-val').value.trim();let u=txt===''?precoDe(k,o):parseFloat(txt),aviso=false;
  if(txt===''&&!u){if(c>0){u=c;aviso=true}else return toast('Este item está sem valor nem custo no cadastro. Informe o valor unitário.')}
  if(!(u>=0))return toast('Valor inválido.');
- itens.push({k,id,nome:k==='s'?o.tipo:o.desc,q,u,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;prefill();renderItens();
+ itens.push({k,id,nome:k==='s'?o.tipo:(o.descr||o.desc),cod:o.cod||'',q,u,c:k==='s'?o.custo:o.compra});$('i-qtd').value=1;prefill();renderItens();
  if(aviso)toast('Item adicionado pelo custo (markup 0%). Ajuste o markup ou a margem na lista.')};
 function prefill(){const k=$('i-kind').value,o=selItem(),c=o?custoReg(k,o):0,v=o?precoDe(k,o):0;
  $('i-val').value=v||'';$('i-val').placeholder=v?'':'valor de venda';$('i-pct').value=(c>0&&v>0)?mkP(c,v):'';$('i-mar').value=mkM(c,v);iRes()}
@@ -382,7 +385,7 @@ $('i-item').onchange=prefill;
 window.edItem=(n,f,v)=>{const i=itens[n];
  if(f==='nome'){i.nome=v.trim()||i.nome}else if(f==='m'){const c=itemCusto(i),x=parseFloat(v);if(!(c>0))toast('Este item está sem custo cadastrado.');else if(isNaN(x)||x<=-100)toast('Markup inválido.');else i.u=Math.round(c*(1+x/100)*100)/100}else if(f==='g'){const c=itemCusto(i),x=parseFloat(v);if(!(c>0))toast('Este item está sem custo cadastrado.');else if(isNaN(x)||x>=100)toast('A margem precisa ser menor que 100%.');else i.u=Math.round(c/(1-x/100)*100)/100}else{const x=parseFloat(v);if(!(x>=0)||(f==='q'&&x<=0))toast(f==='q'?'Quantidade inválida.':'Valor inválido.');else i[f]=x}
  renderItens()};
-function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>{const c=itemCusto(i),m=c>0?((i.u/c-1)*100).toFixed(2):'',g=c>0&&i.u>0?((i.u-c)/i.u*100).toFixed(2):'';return`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"><div style="font-size:12px;margin-top:4px">${c>0?'<span class="mu">Custo unit. '+R(c)+'</span> · '+tag(c,i.u):'<span class="mu">Sem custo cadastrado</span>'}</div></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" step="0.01" value="${m}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'m',this.value)" style="width:92px"></td><td><input type="number" step="0.01" value="${g}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'g',this.value)" style="width:92px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`}).join('')||'<tr><td colspan="8" class="mu">Nenhum item adicionado.</td></tr>';
+function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>{const c=itemCusto(i),m=c>0?((i.u/c-1)*100).toFixed(2):'',g=c>0&&i.u>0?((i.u-c)/i.u*100).toFixed(2):'';return`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td class="mu">${esc(i.cod!==undefined?i.cod:((DB[i.k==='s'?'serv':'prod'].find(x=>x.id===i.id)||{}).cod||''))}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"><div style="font-size:12px;margin-top:4px">${c>0?'<span class="mu">Custo unit. '+R(c)+'</span> · '+tag(c,i.u):'<span class="mu">Sem custo cadastrado</span>'}</div></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" step="0.01" value="${m}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'m',this.value)" style="width:92px"></td><td><input type="number" step="0.01" value="${g}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'g',this.value)" style="width:92px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`}).join('')||'<tr><td colspan="9" class="mu">Nenhum item adicionado.</td></tr>';
  const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-ss').textContent=R(itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0));$('o-sp').textContent=R(itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0));pvPay();$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
 $('o-save').onclick=()=>{const num=$('o-num').value.trim();if(!editId&&!num)return toast('Informe o número do orçamento.');
  if(num&&DB.orc.some(x=>x.id!==editId&&x.num===num&&x.ano===oAno))return toast('Já existe o orçamento nº '+num+'/'+oAno+'.');
@@ -397,7 +400,7 @@ $('o-save').onclick=()=>{const num=$('o-num').value.trim();if(!editId&&!num)retu
 
 const dig=s=>String(s||'').replace(/\D/g,'');
 window.zap=id=>{const o=DB.orc.find(x=>x.id===id);let t=dig(o.tel);if(!t)return toast('Cadastre o telefone/WhatsApp do cliente.');if(t.length<=11)t='55'+t;
- const m=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${nOrc(o)} (${o.data}):\n\n`+o.itens.map(i=>`• ${i.q}x ${i.nome} — ${R(i.q*i.u)}`).join('\n')+`\n\nSubtotal serviços: ${R(totS(o))}\nSubtotal produtos: ${R(totM(o))}\nTotal: ${R(o.total)}\n\n${payLinhas(o.cond||{},o,R).join('\n')}\n\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
+ const m=`Olá, ${o.contato||o.cli}! Segue o orçamento nº ${nOrc(o)} (${o.data}):\n\n`+o.itens.map(i=>`• ${i.q}x ${i.cod?i.cod+' · ':''}${i.nome} — ${R(i.q*i.u)}`).join('\n')+`\n\nSubtotal serviços: ${R(totS(o))}\nSubtotal produtos: ${R(totM(o))}\nTotal: ${R(o.total)}\n\n${payLinhas(o.cond||{},o,R).join('\n')}\n\nPara aprovar, rejeitar ou pedir revisão, acesse: ${linkOrc(o)}`;
  window.open('https://wa.me/'+t+'?text='+encodeURIComponent(m),'_blank')};
 window.setSt=async(id,st)=>{const o=DB.orc.find(x=>x.id===id);if(!await ask((st==='Aprovado'?'Aprovar':'Recusar')+' o orçamento nº '+nOrc(o)+'?',st==='Aprovado'?'O estoque dos produtos do orçamento será descontado.':'O orçamento ficará como recusado.',st==='Aprovado'?'Aprovar':'Recusar',st!=='Aprovado'))return;
  o.status=st;
@@ -431,7 +434,7 @@ function mkPdf(o){
  y+=3;d.text('Tipo de orçamento: '+o.tipo,M,y);y+=8;
  if(o.desc){d.setFont(undefined,'bold');d.text('Descrição',M,y);d.setFont(undefined,'normal');y+=5;d.splitTextToSize(o.desc,182).forEach(s=>{pg(5);d.text(s,M,y);y+=5});y+=4}
  pg(14);d.setFont(undefined,'bold');d.text('Item',M,y);d.text('Qtd',120,y);d.text('Unit.',140,y);d.text('Total',170,y);d.setFont(undefined,'normal');y+=2;d.line(M,y,196,y);y+=6;
- o.itens.forEach(i=>{const l=d.splitTextToSize((i.k==='s'?'[Serviço] ':'[Produto] ')+i.nome,100);pg(l.length*5+2);d.text(l,M,y);d.text(String(i.q),120,y);d.text(R2(i.u),140,y);d.text(R2(i.q*i.u),170,y);y+=l.length*5+2});
+ o.itens.forEach(i=>{const l=d.splitTextToSize((i.k==='s'?'[Serviço] ':'[Produto] ')+(i.cod?i.cod+' · ':'')+i.nome,100);pg(l.length*5+2);d.text(l,M,y);d.text(String(i.q),120,y);d.text(R2(i.u),140,y);d.text(R2(i.q*i.u),170,y);y+=l.length*5+2});
  y+=2;d.line(M,y,196,y);y+=7;d.setFontSize(10);d.setFont(undefined,'normal');pg(26);d.text('Subtotal serviços: '+R2(totS(o)),196,y,{align:'right'});y+=6;d.text('Subtotal produtos: '+R2(totM(o)),196,y,{align:'right'});y+=8;d.setFontSize(12);d.setFont(undefined,'bold');d.text('Total: '+R2(o.total),196,y,{align:'right'});
  y+=10;d.setFontSize(10);pg(20);d.text('Condições',M,y);d.setFont(undefined,'normal');y+=6;
  condLinhas(o).forEach(l=>{d.splitTextToSize(l,182).forEach(s=>{pg(5);d.text(s,M,y);y+=5})});
@@ -613,6 +616,16 @@ function docShow(){const v=$('o-doct').value;$('o-docnw').style.display=v?'':'no
 $('o-doct').onchange=docShow;
 let editSnap='';const snap=()=>JSON.stringify([$('o-cli').value,$('o-tipo').value,$('o-desc').value,itens.map(i=>[i.k,i.id,i.nome,i.q,i.u]),getCond()]);
 $('o-num').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'')};
+function cliKey(c){return c.apel||c.fant||c.nome}
+function cliLabel(c){return(c.apel||c.fant?(c.apel||c.fant)+' — '+c.nome:c.nome)+(c.contato?' · '+c.contato:'')}
+function cliOpts(q){q=String(q||'').trim().toLowerCase();return DB.cli.filter(c=>!q||[c.nome,c.fant,c.apel,c.doc,c.contato].some(v=>String(v||'').toLowerCase().includes(q))).sort((a,b)=>_cmp(cliKey(a),cliKey(b))).map(c=>`<option value="${c.id}">${esc(cliLabel(c))}</option>`).join('')}
+const cliEnd=c=>[c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', ');
+function fichaHtml(c){if(!c)return'';const l=(k,v)=>v?`<div><span class="mu">${k}:</span> ${esc(v)}</div>`:'';return`<div class="pg" style="margin-top:8px;font-size:13px"><b>Cadastro do cliente</b>${l('Razão social',c.nome)}${l('Nome fantasia',c.fant)}${l('Apelido',c.apel)}${l('CNPJ/CPF',c.doc)}${l('Contato',c.contato)}${l('Telefone',c.tel)}${l('E-mail',c.email)}${l('Endereço',cliEnd(c))}</div>`}
+function showFicha(p){const s=$(p==='o'?'o-cli':'os-cli'),f=$(p==='o'?'o-ficha':'os-ficha');if(s&&f)f.innerHTML=fichaHtml(DB.cli.find(x=>x.id===s.value))}
+(function(){const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');Object.defineProperty(HTMLSelectElement.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,v);if(this.id==='o-cli'||this.id==='os-cli')showFicha(this.id==='o-cli'?'o':'os')}})})();
+[['o','o-cq','o-cli'],['os','os-cq','os-cli']].forEach(([p,q,s])=>{$(q).oninput=()=>{const cur=$(s).value;$(s).innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts($(q).value);
+ if([...$(s).options].some(o=>o.value===cur&&cur))$(s).value=cur;else if($(s).options.length===2){$(s).selectedIndex=1;showFicha(p);$(s).dispatchEvent(new Event('change'))}else $(s).value=''};
+ $(s).addEventListener('change',()=>showFicha(p))});
 const _cmp=(a,b)=>String(a||'').localeCompare(String(b||''),'pt-BR',{sensitivity:'base',numeric:true});
 function ordena(){DB.cli.sort((a,b)=>_cmp(a.nome,b.nome));DB.prod.sort((a,b)=>_cmp(a.desc,b.desc));DB.serv.sort((a,b)=>_cmp(a.tipo,b.tipo))}
 
@@ -750,10 +763,10 @@ window.grafPdf=async i=>{if(!window.jspdf)return toast('Não foi possível carre
 $('g-print').onclick=()=>grafPrint('all');$('g-pdf').onclick=()=>grafPdf('all');
 function render(){ordena();brand();upd();onbRender();osRender();relRender();solRender();finRender();despRender();if($('s-graf')&&$('s-graf').classList.contains('on'))grafRender();DB.orc.forEach(o=>{o.status=o.status||'Pendente';o.pago=o.pago||0});
  const cur=$('o-cli').value;
- $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}</option>`).join('');$('o-cli').value=cur;
+ $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts($('o-cq').value);$('o-cli').value=cur;
  fillItems();renderItens();
- $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
- $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${p.venda?tag(p.compra,p.venda):'<span class="mu">valor a definir</span>'}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="8" class="mu">Nenhum produto.</td></tr>';
+ $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}${(c.fant||c.apel)?`<div class="mu" style="font-size:12px">${esc([c.fant,c.apel&&'Apelido: '+c.apel].filter(Boolean).join(' · '))}</div>`:''}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
+ $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${esc(p.descr||'')}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${p.venda?tag(p.compra,p.venda):'<span class="mu">valor a definir</span>'}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="9" class="mu">Nenhum produto.</td></tr>';
  $('v-list').innerHTML=DB.serv.map(s=>`<tr><td>${esc(s.cod)}</td><td>${esc(s.tipo)}</td><td>${R(s.custo)}</td><td>${R(s.final)}</td><td>${pct(s.custo,s.final)}</td><td>${s.final?tag(s.custo,s.final):'<span class="mu">valor a definir</span>'}</td><td>${acts('serv',s.id)}</td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum serviço.</td></tr>';
  $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${nOrc(o)}</td><td>${o.data}</td><td>${esc(o.cli)}</td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> <button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'||o.status==='Em revisão'?`${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
 }
@@ -776,7 +789,7 @@ async function pull(){
 async function push(){
  if(!SESS)throw new Error('sessão expirada, entre de novo');const uid_=SESS.user.id;
  const e=DB.emp||{},empresa={nome:e.nome||'',doc:e.doc||'',tel:e.tel||'',mail:e.mail||'',end:e.end||'',cor:e.cor||'',logo:e.logo||''};
- const rows=DB.orc.filter(o=>o.token).map(o=>({id:o.id,token:o.token,numero:nOrc(o),data:iso(o.data),cliente:o.cli,contato:o.contato||'',tipo:o.tipo,descricao:o.desc||'',itens:o.itens.map(i=>({k:i.k,id:i.id,nome:i.nome,q:i.q,u:i.u})),total:o.total,empresa,status:o.status,nota:o.nota||null,rev:o.rev||0,pago:o.pago||0,condicoes:o.cond||{}}));
+ const rows=DB.orc.filter(o=>o.token).map(o=>({id:o.id,token:o.token,numero:nOrc(o),data:iso(o.data),cliente:o.cli,contato:o.contato||'',tipo:o.tipo,descricao:o.desc||'',itens:o.itens.map(i=>({k:i.k,id:i.id,nome:i.nome,cod:i.cod||'',q:i.q,u:i.u})),total:o.total,empresa,status:o.status,nota:o.nota||null,rev:o.rev||0,pago:o.pago||0,condicoes:o.cond||{}}));
  if(rows.length){const {error}=await db.from('orcamentos').upsert(rows,{onConflict:'id'});if(error)throw error}
  const {error:e2}=await db.from('dados').upsert({owner:uid_,conteudo:DB,atualizado:new Date().toISOString()},{onConflict:'owner'});if(e2)throw e2;const {error:e3}=await db.from('perfil_publico').upsert({owner:uid_,nome:e.nome||'',tel:e.tel||'',cor:e.cor||'',logo:e.logo||''},{onConflict:'owner'});if(e3)throw e3}
 async function sync(){if(!user)return;setSync('salvando…');
@@ -879,7 +892,7 @@ const info=(t,html)=>dlgShow('<h2>'+esc(t)+'</h2>'+html,[['Fechar','',true]]);
 window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id),cu=custoOrc(o),lu=o.total-cu;
  info('Orçamento nº '+nOrc(o)+(o.rev?' (rev. '+o.rev+')':''),
   `<div class="mu">${esc(o.data)} · ${esc(o.cli)} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
-  `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
+  `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${i.cod?esc(i.cod)+' · ':''}${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
   `</tbody></table><div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.distrib==='sim'?'<p><b>Materiais faturados pelo distribuidor</b> (fora das Finanças)</p>':'')+(o.docTipo?`<p><b>${esc(o.docTipo)}:</b> ${esc(o.docNum||'sem número informado')}</p>`:'')+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
 window.delSol=async id=>{const s=SOL.find(x=>x.id===id);
  if(!await ask('Excluir a solicitação #'+s.protocolo+'?','O cliente cadastrado a partir dela continua na aba Clientes.','Excluir',true))return;
@@ -922,7 +935,7 @@ window.osEdit=id=>{const o=DB.os.find(x=>x.id===id);if(!o)return;
  const d=document.createElement('div');d.className='ov';
  d.innerHTML='<div class="card dg" style="max-width:640px"><h2>Editar OS nº '+osNum(o.n)+'</h2><div class="g"><div class="w2"><label>Cliente</label><select id="ox-cli"></select></div><div class="w2"><label>Equipamento</label><input id="ox-eq"></div><div><label>Marca</label><input id="ox-marca"></div><div><label>Modelo</label><input id="ox-modelo"></div><div><label>Nº de série</label><input id="ox-serie"></div><div><label>Nº O.S. terceiros</label><input id="ox-terc"></div><div class="w2"><label>Defeito apresentado</label><textarea id="ox-def"></textarea></div></div><div class="dgb" style="margin-top:12px"><button class="btn s" id="ox-cancel">Cancelar</button><button class="btn" id="ox-save">Salvar</button></div></div>';
  document.body.appendChild(d);const q=i=>d.querySelector('#'+i);
- q('ox-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>'<option value="'+c.id+'">'+esc(c.nome)+'</option>').join('');
+ q('ox-cli').innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts('');
  q('ox-cli').value=o.cliId||'';q('ox-eq').value=o.equip||'';q('ox-marca').value=o.marca||'';q('ox-modelo').value=o.modelo||'';q('ox-serie').value=o.serie||'';q('ox-terc').value=o.osTerc||'';q('ox-def').value=o.defeito||'';
  q('ox-cancel').onclick=()=>d.remove();
  q('ox-save').onclick=()=>{const cid=q('ox-cli').value,eq=q('ox-eq').value.trim(),df=q('ox-def').value.trim();
@@ -950,12 +963,12 @@ window.orcOS=id=>{const o=DB.os.find(x=>x.id===id);if(!o)return;
 window.osDel=async id=>{const o=DB.os.find(x=>x.id===id);if(!await ask('Excluir a OS nº '+osNum(o.n)+'?','Esta ação não pode ser desfeita.','Excluir',true))return;
  DB.os=DB.os.filter(x=>x.id!==id);if(osEditId===id)osLimpa();save();render();toast('OS excluída.','ok')};
 function osRender(){DB.os=DB.os||[];const cur=$('os-cli').value;
- $('os-cli').innerHTML='<option value="">Selecione o cliente…</option>'+DB.cli.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.contato?' — '+esc(c.contato):''}</option>`).join('');$('os-cli').value=cur;
+ $('os-cli').innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts($('os-cq').value);$('os-cli').value=cur;
  $('os-num').textContent='Número desta OS: '+osNum(DB.osSeq||1)+' (gerado automaticamente)';
  const ck='width:20px;min-height:20px;height:20px',lb='display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:var(--tx);min-height:42px';
  $('os-list').innerHTML=DB.os.slice().sort((a,b)=>b.n-a.n).map(o=>{const c=DB.cli.find(x=>x.id===o.cliId),pg=osPaga(o),mais=o.status!=='Aberta',mp=o.status==='Aprovada'||o.status==='Baixada';
   return `<div class="os" id="osc-${o.id}"><div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center"><b>OS nº ${osNum(o.n)}</b><span><span class="bd ${osCls[o.status]||''}">${esc(o.status)}</span> <span class="mu">${esc(o.data)}</span></span></div>
-  <div style="margin-top:4px"><b>${esc(o.cli)}</b>${c&&c.tel?` <span class="mu">· ${esc(c.tel)}</span>`:''}</div>
+  <div style="margin-top:4px"><b>${esc(c?cliKey(c)+(cliKey(c)!==c.nome?' — '+c.nome:''):o.cli)}</b></div>${c?`<div class="mu" style="font-size:12px">${esc([c.doc,c.contato,c.tel,c.email,cliEnd(c)].filter(Boolean).join(' · '))}</div>`:''}
   <div>${esc([o.equip,o.marca,o.modelo].filter(Boolean).join(' · '))}</div>
   <div class="mu">${esc([o.serie&&'Série: '+o.serie,o.osTerc&&'O.S. terceiros: '+o.osTerc].filter(Boolean).join(' · '))}</div>
   <div style="margin-top:6px;white-space:pre-wrap"><span class="mu">Defeito apresentado:</span> ${esc(o.defeito)}</div>

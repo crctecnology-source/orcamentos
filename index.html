@@ -97,7 +97,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="g">
 <div><label>Tipo de orçamento</label><select id="o-tipo"><option>Serviço</option><option>Produto</option><option>Produto e serviço</option></select></div>
 <div><label>Nº do orçamento</label><div style="display:flex;align-items:center;gap:6px"><input id="o-num" inputmode="numeric" placeholder="Ex.: 123" style="max-width:130px"><b id="o-ano" style="font-size:16px"></b></div></div>
-<div class="w2"><label>Cliente</label><input id="o-cq" placeholder="Buscar por razão social, nome fantasia ou apelido" style="margin-bottom:6px"><select id="o-cli"></select><div id="o-ficha"></div></div>
+<div class="w2"><label>Cliente</label><input id="o-cq" placeholder="Buscar por razão social ou nome fantasia" style="margin-bottom:6px"><select id="o-cli"></select><div id="o-ficha"></div></div>
 </div>
 <div style="margin-top:10px"><label>Descrição dos serviços e materiais solicitados</label><textarea id="o-desc"></textarea></div>
 <h2 style="margin-top:14px">Itens</h2>
@@ -142,7 +142,6 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div class="g">
 <div class="w2"><label>Razão social</label><input id="c-nome"></div>
 <div class="w2"><label>Nome fantasia</label><input id="c-fant"></div>
-<div><label>Apelido</label><input id="c-apel"></div>
 <div><label>Nome do contato</label><input id="c-contato"></div>
 <div><label>CNPJ ou CPF</label><input id="c-doc"></div>
 <div><label>Telefone / WhatsApp</label><input id="c-tel" placeholder="(11) 90000-0000"></div>
@@ -158,7 +157,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div id="c-msg" class="mu"></div>
 <button class="btn" id="c-save">Salvar cliente</button>
 </div>
-<div class="card"><input class="q" data-t="#c-list tr" placeholder="Buscar cliente por razão social, fantasia, apelido, CNPJ, telefone…"><div class="tw"><table><thead><tr><th>Razão social</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
+<div class="card"><input class="q" data-t="#c-list tr" placeholder="Buscar cliente por razão social, nome fantasia, CNPJ, telefone…"><div class="tw"><table><thead><tr><th>Razão social</th><th>Contato</th><th>E-mail</th><th>CNPJ/CPF</th><th>Endereço</th><th></th></tr></thead><tbody id="c-list"></tbody></table></div></div>
 </section>
 
 <section id="s-prod">
@@ -202,7 +201,7 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <section id="s-os"><div class="card"><h2 id="os-h">Nova ordem de serviço</h2>
 <div class="mu" id="os-num" style="margin:-6px 0 12px"></div>
 <div class="g">
-<div class="w2"><label>Cliente</label><input id="os-cq" placeholder="Buscar por razão social, nome fantasia ou apelido" style="margin-bottom:6px"><select id="os-cli"></select><div id="os-ficha"></div></div>
+<div class="w2"><label>Cliente</label><input id="os-cq" placeholder="Buscar por razão social ou nome fantasia" style="margin-bottom:6px"><select id="os-cli"></select><div id="os-ficha"></div></div>
 <div><label>Equipamento</label><input id="os-eq"></div>
 <div><label>Marca</label><input id="os-marca"></div>
 <div><label>Modelo</label><input id="os-modelo"></div>
@@ -325,8 +324,8 @@ async function buscaCep(c){
 function upsert(list,obj){const i=DB[list].findIndex(x=>x.id===obj.id);i>=0?DB[list][i]=obj:DB[list].push(obj);save();toast(i>=0?'Alterações salvas.':'Cadastro salvo.','ok')}
 function clear(ids){ids.forEach(i=>$(i).value='')}
 $('c-save').onclick=()=>{if(!$('c-nome').value.trim())return toast('Informe a razão social.');
- upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),fant:$('c-fant').value.trim(),apel:$('c-apel').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
- clear(['c-id','c-nome','c-fant','c-apel','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);$('c-msg').textContent='';render();window.scrollTo(0,0);toast('Cliente salvo.','ok')};
+ upsert('cli',{id:$('c-id').value||uid(),nome:$('c-nome').value.trim(),fant:$('c-fant').value.trim(),contato:$('c-contato').value.trim(),doc:$('c-doc').value,tel:$('c-tel').value,email:$('c-email').value.trim(),cep:$('c-cep').value,rua:$('c-rua').value,bai:$('c-bai').value,cid:$('c-cid').value,uf:$('c-uf').value,num:$('c-num').value,comp:$('c-comp').value});
+ clear(['c-id','c-nome','c-fant','c-contato','c-doc','c-tel','c-email','c-cep','c-rua','c-bai','c-cid','c-uf','c-num','c-comp']);$('c-msg').textContent='';render();window.scrollTo(0,0);toast('Cliente salvo.','ok')};
 const nk=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
 $('p-save').onclick=()=>{if(!$('p-desc').value.trim())return toast('Informe o produto.');
  {const id=$('p-id').value,cd=nk($('p-cod').value),ds=nk($('p-desc').value),d1=cd&&DB.prod.find(x=>x.id!==id&&nk(x.cod)===cd),d2=DB.prod.find(x=>x.id!==id&&nk(x.desc)===ds);
@@ -341,10 +340,11 @@ $('v-save').onclick=()=>{if(!$('v-tipo').value.trim())return toast('Informe o ti
 
 // editar / excluir
 window.edit=(l,id)=>{const o=DB[l].find(x=>x.id===id);
- const m={cli:{id:'c-id',nome:'c-nome',fant:'c-fant',apel:'c-apel',contato:'c-contato',doc:'c-doc',cep:'c-cep',rua:'c-rua',bai:'c-bai',cid:'c-cid',uf:'c-uf',num:'c-num',comp:'c-comp',tel:'c-tel',email:'c-email'},
+ const m={cli:{id:'c-id',nome:'c-nome',fant:'c-fant',contato:'c-contato',doc:'c-doc',cep:'c-cep',rua:'c-rua',bai:'c-bai',cid:'c-cid',uf:'c-uf',num:'c-num',comp:'c-comp',tel:'c-tel',email:'c-email'},
   prod:{id:'p-id',desc:'p-desc',descr:'p-descr',cod:'p-cod',compra:'p-compra',venda:'p-venda',qtd:'p-qtd',min:'p-min'},
   serv:{id:'v-id',tipo:'v-tipo',cod:'v-cod',custo:'v-custo',final:'v-final'}}[l];
  for(const k in m)$(m[k]).value=o[k]??'';
+ if(l==='cli'&&!$('c-fant').value&&o.apel)$('c-fant').value=o.apel;
  if(l==='prod')$('p-venda').oninput();if(l==='serv')$('v-final').oninput();upd();window.scrollTo(0,0)};
 window.del=async(l,id)=>{if(await ask('Excluir este registro?','Esta ação não pode ser desfeita.','Excluir',true)){DB[l]=DB[l].filter(x=>x.id!==id);if(l==='orc'&&sb)db.from('orcamentos').delete().eq('id',id).then(()=>{});save();render()}};
 const acts=(l,id)=>`<button class="ed" onclick="edit('${l}','${id}')">editar</button> <button class="x" onclick="del('${l}','${id}')">excluir</button>`;
@@ -616,11 +616,12 @@ function docShow(){const v=$('o-doct').value;$('o-docnw').style.display=v?'':'no
 $('o-doct').onchange=docShow;
 let editSnap='';const snap=()=>JSON.stringify([$('o-cli').value,$('o-tipo').value,$('o-desc').value,itens.map(i=>[i.k,i.id,i.nome,i.q,i.u]),getCond()]);
 $('o-num').oninput=e=>{e.target.value=e.target.value.replace(/\D/g,'')};
-function cliKey(c){return c.apel||c.fant||c.nome}
-function cliLabel(c){return(c.apel||c.fant?(c.apel||c.fant)+' — '+c.nome:c.nome)+(c.contato?' · '+c.contato:'')}
+function cliKey(c){return c.fant||c.apel||c.nome}
+const cliFant=nome=>{const c=DB.cli.find(x=>x.nome===nome);return c?cliKey(c):nome};
+function cliLabel(c){const f=c.fant||c.apel;return(f?f+' — '+c.nome:c.nome)+(c.contato?' · '+c.contato:'')}
 function cliOpts(q){q=String(q||'').trim().toLowerCase();return DB.cli.filter(c=>!q||[c.nome,c.fant,c.apel,c.doc,c.contato].some(v=>String(v||'').toLowerCase().includes(q))).sort((a,b)=>_cmp(cliKey(a),cliKey(b))).map(c=>`<option value="${c.id}">${esc(cliLabel(c))}</option>`).join('')}
 const cliEnd=c=>[c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', ');
-function fichaHtml(c){if(!c)return'';const l=(k,v)=>v?`<div><span class="mu">${k}:</span> ${esc(v)}</div>`:'';return`<div class="pg" style="margin-top:8px;font-size:13px"><b>Cadastro do cliente</b>${l('Razão social',c.nome)}${l('Nome fantasia',c.fant)}${l('Apelido',c.apel)}${l('CNPJ/CPF',c.doc)}${l('Contato',c.contato)}${l('Telefone',c.tel)}${l('E-mail',c.email)}${l('Endereço',cliEnd(c))}</div>`}
+function fichaHtml(c){if(!c)return'';const l=(k,v)=>v?`<div><span class="mu">${k}:</span> ${esc(v)}</div>`:'';return`<div class="pg" style="margin-top:8px;font-size:13px"><b>Cadastro do cliente</b>${l('Razão social',c.nome)}${l('Nome fantasia',c.fant||c.apel)}${l('CNPJ/CPF',c.doc)}${l('Contato',c.contato)}${l('Telefone',c.tel)}${l('E-mail',c.email)}${l('Endereço',cliEnd(c))}</div>`}
 function showFicha(p){const s=$(p==='o'?'o-cli':'os-cli'),f=$(p==='o'?'o-ficha':'os-ficha');if(s&&f)f.innerHTML=fichaHtml(DB.cli.find(x=>x.id===s.value))}
 (function(){const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value');Object.defineProperty(HTMLSelectElement.prototype,'value',{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,v);if(this.id==='o-cli'||this.id==='os-cli')showFicha(this.id==='o-cli'?'o':'os')}})})();
 [['o','o-cq','o-cli'],['os','os-cq','os-cli']].forEach(([p,q,s])=>{$(q).oninput=()=>{const cur=$(s).value;$(s).innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts($(q).value);
@@ -765,10 +766,10 @@ function render(){ordena();brand();upd();onbRender();osRender();relRender();solR
  const cur=$('o-cli').value;
  $('o-cli').innerHTML='<option value="">Selecione o cliente…</option>'+cliOpts($('o-cq').value);$('o-cli').value=cur;
  fillItems();renderItens();
- $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}${(c.fant||c.apel)?`<div class="mu" style="font-size:12px">${esc([c.fant,c.apel&&'Apelido: '+c.apel].filter(Boolean).join(' · '))}</div>`:''}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
+ $('c-list').innerHTML=DB.cli.map(c=>`<tr><td>${esc(c.nome)}${(c.fant||c.apel)?`<div class="mu" style="font-size:12px">${esc(c.fant||c.apel)}</div>`:''}</td><td>${esc(c.contato)}</td><td>${esc(c.email)}</td><td>${esc(c.doc)}</td><td>${esc([c.rua,c.num,c.comp,c.bai,c.cid&&c.cid+'/'+c.uf,c.cep].filter(Boolean).join(', '))}</td><td>${acts('cli',c.id)}</td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum cliente.</td></tr>';
  $('p-list').innerHTML=DB.prod.map(p=>`<tr><td>${esc(p.cod)}</td><td>${esc(p.desc)}</td><td>${esc(p.descr||'')}</td><td>${R(p.compra)}</td><td>${R(p.venda)}</td><td>${pct(p.compra,p.venda)}</td><td>${p.venda?tag(p.compra,p.venda):'<span class="mu">valor a definir</span>'}</td><td class="${p.qtd<=p.min?'low':''}">${p.qtd}${p.qtd<=p.min?' (baixo)':''}</td><td>${acts('prod',p.id)}</td></tr>`).join('')||'<tr><td colspan="9" class="mu">Nenhum produto.</td></tr>';
  $('v-list').innerHTML=DB.serv.map(s=>`<tr><td>${esc(s.cod)}</td><td>${esc(s.tipo)}</td><td>${R(s.custo)}</td><td>${R(s.final)}</td><td>${pct(s.custo,s.final)}</td><td>${s.final?tag(s.custo,s.final):'<span class="mu">valor a definir</span>'}</td><td>${acts('serv',s.id)}</td></tr>`).join('')||'<tr><td colspan="7" class="mu">Nenhum serviço.</td></tr>';
- $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${nOrc(o)}</td><td>${o.data}</td><td>${esc(o.cli)}</td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> <button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'||o.status==='Em revisão'?`${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
+ $('o-list').innerHTML=DB.orc.slice().reverse().map(o=>`<tr><td>${nOrc(o)}</td><td>${o.data}</td><td>${esc(cliFant(o.cli))}<span style="display:none"> ${esc(o.cli)}</span></td><td>${o.tipo}</td><td>${R(o.total)}</td><td><span class="bd ${stCls[o.status]||''}">${o.status}</span>${o.rev?' (rev. '+o.rev+')':''}${o.aprovadoEm?' em '+o.aprovadoEm:''}${o.nota?'<br><span class="mu">'+esc(o.nota)+'</span>':''}</td><td>${o.status==='Aprovado'?(o.pago>=o.total?'Pago':(o.pago?'Pago '+R(o.pago)+' / falta '+R(o.total-o.pago):'Em aberto')):'—'}</td><td><button class="ed" onclick="verOrc('${o.id}')">ver</button> <button class="ed" onclick="editOrc('${o.id}')">editar</button> ${o.status==='Pendente'||o.status==='Em revisão'?`${o.status==='Pendente'?`<button class="ed" onclick="revisao('${o.id}')">revisão</button> `:''}<button class="ed" onclick="pdfOrc('${o.id}')">PDF no WhatsApp</button> <button class="ed" onclick="emailOrc('${o.id}')">enviar por e-mail</button> <button class="ed" onclick="zap('${o.id}')">WhatsApp (texto)</button> <button class="ed" onclick="setSt('${o.id}','Aprovado')">aprovar</button> <button class="x" onclick="setSt('${o.id}','Recusado')">recusar</button> `:''}${o.status==='Aprovado'&&o.pago<o.total?`<button class="ed" onclick="baixa('${o.id}')">dar baixa</button> <button class="ed" onclick="pagar('${o.id}')">marcar como pago</button> `:''}<button class="x" onclick="del('orc','${o.id}')">excluir</button></td></tr>`).join('')||'<tr><td colspan="6" class="mu">Nenhum orçamento salvo.</td></tr>';
 }
 // ===== Supabase: login, nuvem e aprovação pelo cliente =====
 const iso=s=>{const p=String(s).split('/');return p[2]+'-'+p[1]+'-'+p[0]};
@@ -891,7 +892,7 @@ const ask=(t,txt,ok,perigo)=>dlgShow('<h2>'+esc(t)+'</h2><p class="mu" style="fo
 const info=(t,html)=>dlgShow('<h2>'+esc(t)+'</h2>'+html,[['Fechar','',true]]);
 window.verOrc=id=>{const o=DB.orc.find(x=>x.id===id),cu=custoOrc(o),lu=o.total-cu;
  info('Orçamento nº '+nOrc(o)+(o.rev?' (rev. '+o.rev+')':''),
-  `<div class="mu">${esc(o.data)} · ${esc(o.cli)} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
+  `<div class="mu">${esc(o.data)} · ${esc(cliFant(o.cli))}${cliFant(o.cli)!==o.cli?' (razão social: '+esc(o.cli)+')':''} · ${esc(o.tipo)}</div>`+(o.desc?`<p style="white-space:pre-wrap">${esc(o.desc)}</p>`:'')+
   `<table><thead><tr><th>Item</th><th>Qtd</th><th>Total</th></tr></thead><tbody>`+o.itens.map(i=>`<tr><td>${i.cod?esc(i.cod)+' · ':''}${esc(i.nome)}</td><td>${i.q}</td><td>${R(i.q*i.u)}</td></tr>`).join('')+
   `</tbody></table><div class="mu" style="text-align:right">Subtotal serviços: ${R(totS(o))}<br>Subtotal produtos: ${R(totM(o))}</div><div class="tot">Total: ${R(o.total)}</div><div class="mu" style="text-align:right">Custo: ${R(cu)} · ${tag(cu,o.total)}</div><div class="mu" style="margin-top:10px">${condLinhas(o).map(esc).join('<br>')}</div>`+(o.distrib==='sim'?'<p><b>Materiais faturados pelo distribuidor</b> (fora das Finanças)</p>':'')+(o.docTipo?`<p><b>${esc(o.docTipo)}:</b> ${esc(o.docNum||'sem número informado')}</p>`:'')+(o.nota?`<p><b>Observação do cliente:</b> ${esc(o.nota)}</p>`:''))};
 window.delSol=async id=>{const s=SOL.find(x=>x.id===id);

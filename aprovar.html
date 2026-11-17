@@ -80,8 +80,8 @@ function payLinhas(c,o){const tS=totS(o),tM=totM(o),r=[];
     r.push('Pagamento de materiais ('+R(tM)+'): '+x)}
   return r}
 function show(o){applyTheme((o.empresa||{}).cor);
-  const c=o.condicoes||{},tem=Object.keys(c).length>0,v=c.val||10,L=[];
-  if(tem){L.push('Validade da proposta: '+v+' dias (até '+new Date(new Date(o.data+'T00:00:00').getTime()+v*864e5).toLocaleDateString('pt-BR')+')');
+  const c=o.condicoes||{},tem=Object.keys(c).length>0,v=c.val===undefined?10:c.val,L=[];
+  if(tem){L.push('Validade da proposta: '+v+' dias (até '+(c.ate?new Date(c.ate+'T00:00:00'):new Date(new Date(o.data+'T00:00:00').getTime()+v*864e5)).toLocaleDateString('pt-BR')+')');
     if(c.prazo)L.push('Prazo para execução do serviço: '+c.prazo);
     L.push('Garantia de serviço: '+(c.gs||'90 dias'));
     L.push('Garantia de equipamentos: '+(c.ge||'1 ano, conforme o fabricante'));

@@ -118,7 +118,8 @@ input[readonly],[data-nocaps]{text-transform:none!important}
 <div id="o-res" class="mu" style="text-align:right"></div>
 <h2 style="margin-top:14px">Condições da proposta</h2>
 <div class="g">
-<div><label>Validade da proposta (dias)</label><input id="o-val" type="number" min="1" value="10"></div>
+<div><label>Validade da proposta (dias)</label><input id="o-val" type="number" min="0" value="10"></div>
+<div><label>Válida até (calendário)</label><input id="o-ate" type="date"></div>
 <div class="w2"><label>Prazo para execução do serviço</label><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><input id="o-prazo" type="number" min="1" step="1" placeholder="5" style="max-width:90px"><span style="font-size:14px">dias úteis de acordo com o agendamento</span></div></div>
 <div><label>Garantia de serviço</label><select id="o-gs"><option value="30 dias">30 dias</option><option value="45 dias">45 dias</option><option value="60 dias">60 dias</option><option value="90 dias" selected>90 dias</option><option value="120 dias">120 dias</option></select></div>
 <div class="w2"><label>Garantia de equipamentos</label><input id="o-ge" value="1 ano, conforme o fabricante"></div>
@@ -387,14 +388,14 @@ window.edItem=(n,f,v)=>{const i=itens[n];
  renderItens()};
 function renderItens(){$('o-itens').innerHTML=itens.map((i,n)=>{const c=itemCusto(i),m=c>0?((i.u/c-1)*100).toFixed(2):'',g=c>0&&i.u>0?((i.u-c)/i.u*100).toFixed(2):'';return`<tr><td>${i.k==='s'?'Serviço':'Produto'}</td><td class="mu">${esc(i.cod!==undefined?i.cod:((DB[i.k==='s'?'serv':'prod'].find(x=>x.id===i.id)||{}).cod||''))}</td><td><input value="${esc(i.nome)}" onchange="edItem(${n},'nome',this.value)" style="min-width:200px"><div style="font-size:12px;margin-top:4px">${c>0?'<span class="mu">Custo unit. '+R(c)+'</span> · '+tag(c,i.u):'<span class="mu">Sem custo cadastrado</span>'}</div></td><td><input type="number" min="0" step="any" value="${i.q}" onchange="edItem(${n},'q',this.value)" style="width:84px"></td><td><input type="number" step="0.01" value="${m}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'m',this.value)" style="width:92px"></td><td><input type="number" step="0.01" value="${g}" ${(c>0&&lucroModo==='ind')?'':'disabled'} onchange="edItem(${n},'g',this.value)" style="width:92px"></td><td><input type="number" min="0" step="0.01" value="${i.u}" onchange="edItem(${n},'u',this.value)" style="width:112px"></td><td>${R(i.q*i.u)}</td><td><button class="x" onclick="itens.splice(${n},1);renderItens()">remover</button></td></tr>`}).join('')||'<tr><td colspan="9" class="mu">Nenhum item adicionado.</td></tr>';
  const tt=itens.reduce((a,i)=>a+i.q*i.u,0),cc=itens.reduce((a,i)=>a+i.q*itemCusto(i),0);$('o-total').textContent=R(tt);$('o-ss').textContent=R(itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0));$('o-sp').textContent=R(itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0));pvPay();$('o-res').innerHTML=itens.length?'Custo: '+R(cc)+' · '+tag(cc,tt):''}
-$('o-save').onclick=()=>{const num=$('o-num').value.trim();if(!editId&&!num)return toast('Informe o número do orçamento.');
+$('o-save').onclick=()=>{if(valModo==='data'&&$('o-ate').value&&$('o-ate').value<isoHoje())return toast('A data de validade não pode ser anterior a hoje.');const num=$('o-num').value.trim();if(!editId&&!num)return toast('Informe o número do orçamento.');
  if(num&&DB.orc.some(x=>x.id!==editId&&x.num===num&&x.ano===oAno))return toast('Já existe o orçamento nº '+num+'/'+oAno+'.');
  if(!distGet()){const w=$('o-dist-s');w.scrollIntoView({behavior:'smooth',block:'center'});return toast('Marque Sim ou Não em "Faturado pelo distribuidor?" (pagamento de materiais).')}
  if(!$('o-cli').value)return toast('Escolha um cliente.');if(!itens.length)return toast('Adicione ao menos um item.');
  const c=DB.cli.find(x=>x.id===$('o-cli').value);
  const dados={cli:c.nome,contato:c.contato||'',tel:c.tel||'',tipo:$('o-tipo').value,desc:$('o-desc').value,itens:itens.slice(),total:itens.reduce((a,i)=>a+i.q*i.u,0),cond:getCond(),num:num,ano:num?oAno:undefined,docTipo:$('o-doct').value,docNum:$('o-doct').value?$('o-docn').value.trim():'',distrib:distGet()};
  if(editId&&snap()===editSnap){const o=DB.orc.find(x=>x.id===editId);Object.assign(o,{num:dados.num,ano:dados.ano,docTipo:dados.docTipo,docNum:dados.docNum,distrib:dados.distrib});save();cancelEdit();render();window.scrollTo(0,0);return toast('Salvo. Status, pagamento e estoque não foram alterados.','ok')}
- if(editId){const o=DB.orc.find(x=>x.id===editId);devolveEstoque(o);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1,aprovadoEm:''})}
+ if(editId){const o=DB.orc.find(x=>x.id===editId);devolveEstoque(o);Object.assign(o,dados,{status:'Pendente',nota:'',rev:(o.rev||0)+1,aprovadoEm:'',criadoEm:o.criadoEm||o.data,data:new Date().toLocaleDateString('pt-BR')})}
  else DB.orc.push(Object.assign({id:crypto.randomUUID(),token:crypto.randomUUID(),n:DB.seq++,data:new Date().toLocaleDateString('pt-BR'),status:'Pendente',pago:0},dados));
  save();cancelEdit();render();window.scrollTo(0,0);toast('Orçamento salvo. Formulário pronto para um novo.','ok')};
 
@@ -510,9 +511,18 @@ function pvPay(){const tS=itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),
  $('o-pvs').innerHTML=!tS?'Nenhum serviço neste orçamento.':'Total de serviços: <b>'+R(tS)+'</b> — '+(c.pag==='Cartão'?c.parc+'x de <b>'+R(tS/c.parc)+'</b>':(c.pag==='PIX'?'PIX':'à vista')+': <b>'+R(tS)+'</b>');
  const n=c.bol?c.bol.split('/').length:1;
  $('o-pvm').innerHTML=!tM?'Nenhum produto neste orçamento.':'Total de produtos: <b>'+R(tM)+'</b> — '+(c.pagm==='Cartão'?c.parcm+'x de <b>'+R(tM/c.parcm)+'</b>':c.pagm==='Boleto'?n+(n>1?' parcelas':' parcela')+' de <b>'+R(tM/n)+'</b> ('+c.bol.split('/').join(' / ')+' dias)':'à vista: <b>'+R(tM)+'</b>')}
-function getCond(){const pm=$('o-pagm').value;return{val:+$('o-val').value||10,prazo:(n=>n>0?n+(n===1?' dia útil':' dias úteis')+' de acordo com o agendamento':'')(parseInt($('o-prazo').value)),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
+const isoHoje=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const addDias=(iso,n)=>{const d=new Date(iso+'T00:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const diffDias=(a,b)=>Math.round((new Date(b+'T00:00:00')-new Date(a+'T00:00:00'))/864e5);
+let valModo='dias';
+function valCalc(){const a=$('o-ate').value;if(valModo==='data'&&a){return{val:Math.max(0,diffDias(isoHoje(),a)),ate:a}}const n=parseInt($('o-val').value),v=isNaN(n)?10:Math.max(0,n);return{val:v,ate:addDias(isoHoje(),v)}}
+function valSet(v){valModo='dias';$('o-val').value=v;$('o-ate').value=addDias(isoHoje(),v)}
+$('o-val').oninput=()=>{valModo='dias';const n=parseInt($('o-val').value);$('o-ate').value=addDias(isoHoje(),isNaN(n)?10:Math.max(0,n))};
+$('o-ate').oninput=$('o-ate').onchange=()=>{const a=$('o-ate').value;if(!a)return;valModo='data';$('o-val').value=Math.max(0,diffDias(isoHoje(),a))};
+valSet(10);
+function getCond(){const pm=$('o-pagm').value,vc=valCalc();return{val:vc.val,ate:vc.ate,prazo:(n=>n>0?n+(n===1?' dia útil':' dias úteis')+' de acordo com o agendamento':'')(parseInt($('o-prazo').value)),gs:$('o-gs').value.trim()||'90 dias',ge:$('o-ge').value.trim()||'1 ano, conforme o fabricante',pag:$('o-pag').value,parc:$('o-pag').value==='Cartão'?+$('o-parc').value:1,pagm:pm,parcm:pm==='Cartão'?+$('o-parcm').value:1,bol:pm==='Boleto'?$('o-bol').value:''}}
 function gsSet(v){v=v||'90 dias';const s=$('o-gs');if(![...s.options].some(o=>o.value===v)){const op=document.createElement('option');op.value=op.textContent=v;s.appendChild(op)}s.value=v}
-function setCond(c){$('o-val').value=c.val||10;$('o-prazo').value=(String(c.prazo||'').match(/\d+/)||[''])[0];gsSet(c.gs);$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
+function setCond(c){valSet(c.val===undefined?10:c.val);$('o-prazo').value=(String(c.prazo||'').match(/\d+/)||[''])[0];gsSet(c.gs);$('o-ge').value=c.ge||'1 ano, conforme o fabricante';$('o-pag').value=c.pag||'PIX';$('o-parc').value=c.parc||1;$('o-pagm').value=c.pagm||'À vista';$('o-parcm').value=c.parcm||1;$('o-bol').value=c.bol||'28/56/84';parcShow()}
 const totS=o=>o.itens.filter(i=>i.k==='s').reduce((a,i)=>a+i.q*i.u,0),totM=o=>o.itens.filter(i=>i.k!=='s').reduce((a,i)=>a+i.q*i.u,0);
 const formaTxt=o=>{const c=o.cond;if(!c||!c.pag)return'-';if(!c.pagm)return c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag;
  const s=c.pag==='Cartão'?'Cartão '+(c.parc||1)+'x':c.pag,m=c.pagm==='Cartão'?'Cartão '+(c.parcm||1)+'x':c.pagm==='Boleto'?'Boleto '+(c.bol||''):'À vista',r=[];
@@ -524,7 +534,7 @@ function payLinhas(c,o,Rf){const tS=totS(o),tM=totM(o),r=[];
   else if(c.pagm==='Boleto'&&c.bol){const n=c.bol.split('/').length;x='Boleto em '+n+(n>1?' parcelas':' parcela')+' de '+Rf(tM/n)+' ('+c.bol.split('/').join(' / ')+' dias)'}
   r.push('Pagamento de materiais ('+Rf(tM)+'): '+x)}
  return r}
-function condLinhas(o){const c=o.cond||{},v=c.val||10,ate=new Date(pd(o.data).getTime()+v*864e5).toLocaleDateString('pt-BR'),r=[];
+function condLinhas(o){const c=o.cond||{},v=c.val===undefined?10:c.val,ate=c.ate?new Date(c.ate+'T00:00:00').toLocaleDateString('pt-BR'):new Date(pd(o.data).getTime()+v*864e5).toLocaleDateString('pt-BR'),r=[];
  r.push('Validade da proposta: '+v+' dias (até '+ate+')');
  if(c.prazo)r.push('Prazo para execução do serviço: '+c.prazo);
  r.push('Garantia de serviço: '+(c.gs||'90 dias'));
